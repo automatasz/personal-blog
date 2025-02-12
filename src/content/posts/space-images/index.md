@@ -1,7 +1,7 @@
 ---
-title: Clouds in Space arts
-published: 2024-05-05
-description: Clouds, those ever-changing wonders of the sky, have long captured the imagination of artists and enthusiasts alike. In this exploration of cloud image generation, we delve into the fascinating realm of using LORA (Low-Rank Adaptation) to craft clouds of varying styles and realism levels.
+title: Clouds in Space art
+published: 2024-07-17
+description: Sharing some creations that I worked on.
 tags: [Images]
 category: Artificial Intelligence
 draft: false
@@ -15,4 +15,3 @@ draft: false
 ![Clouds](./tmpn2olsa_j.png)
 ![Clouds](./tmpckk8_2nj.png)
 ![Clouds](./tmp0e8i2o9c.png)
-
