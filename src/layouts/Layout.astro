@@ -19,6 +19,7 @@ import { defaultFavicons } from '../constants/icon'
 import type { Favicon } from '../types/config'
 import { url, pathsEqual } from '../utils/url-utils'
 import 'katex/dist/katex.css'
+import PostHog from '@components/PostHog.astro'
 
 interface Props {
   title?: string
@@ -144,11 +145,10 @@ const bannerOffset =
 
 
 		<slot name="head"></slot>
-
+		<PostHog />
 		<link rel="alternate" type="application/rss+xml" title={profileConfig.name} href={`${Astro.site}rss.xml`}/>
-
 	</head>
-	<body class=" min-h-screen transition " class:list={[{"lg:is-home": isHomePage, "enable-banner": enableBanner}]}
+	<body class="min-h-screen transition" class:list={[{"lg:is-home": isHomePage, "enable-banner": enableBanner}]}
 		  data-overlayscrollbars-initialize
 	>
 		<ConfigCarrier></ConfigCarrier>
