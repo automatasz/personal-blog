@@ -1,4 +1,6 @@
-# Template used to create this website - 🍥Fuwari 
+# Static Astro personal blog website
+
+Template used to create this website - 🍥Fuwari 
 
 A static blog template built with [Astro](https://astro.build).
 
