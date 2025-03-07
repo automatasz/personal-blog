@@ -4,7 +4,7 @@ import tailwind from '@astrojs/tailwind'
 import swup from '@swup/astro'
 import Compress from 'astro-compress'
 import icon from 'astro-icon'
-import { defineConfig } from 'astro/config'
+import { defineConfig, envField } from 'astro/config'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import rehypeComponents from 'rehype-components' /* Render the custom directive content */
 import rehypeKatex from 'rehype-katex'
@@ -127,4 +127,10 @@ export default defineConfig({
       },
     },
   },
+  env: {
+    schema: {
+      POSTHOG_API_KEY: envField.string({ context: "client", access: "public", optional: false, startsWith: "phc_" }),
+      POSTHOG_API_HOST: envField.string({ context: "client", access: "public", optional: false, startsWith: "https://" }),
+    }
+  }
 })
