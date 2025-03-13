@@ -1,6 +1,7 @@
 {
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
+    "target": "ES6",
     "baseUrl": ".",
     "strictNullChecks": true,
     "allowJs": false,
