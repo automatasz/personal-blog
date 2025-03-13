@@ -22,6 +22,9 @@ export default defineConfig([
   {
     files: ['**/*.astro'],
     extends: [eslintPluginAstro.configs.all],
+    rules: {
+      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    },
   },
   {
     files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
@@ -36,7 +39,10 @@ export default defineConfig([
         parser: tseslint.parser,
         svelteConfig
       }
-    }
+    },
+    rules: {
+      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    },
   },
   {
     files: ['**/*.js'],
