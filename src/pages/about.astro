@@ -1,15 +1,45 @@
 ---
-
 import MainGridLayout from '../layouts/MainGridLayout.astro'
-
-import { getEntry } from 'astro:content'
+import { getEntry, render } from 'astro:content'
 import { i18n } from '../i18n/translation'
 import I18nKey from '../i18n/i18nKey'
 import Markdown from '@components/misc/Markdown.astro'
+import MasonryGallery from '@components/MasonryGallery.svelte'
+import { getImage } from 'astro:assets'
+import type { OptimizedImage } from '@/types/masonry-gallery'
 
 const aboutPost = await getEntry('spec', 'about')
 
-const { Content } = await aboutPost.render()
+if (!aboutPost) {
+    console.error('about post not found')
+    return Astro.redirect('/')
+}
+
+const { Content } = await render(aboutPost)
+
+const imagesPromises = Object.entries(import.meta.glob<ImageMetadata>('/src/assets/gallery/*.{jpeg,jpg,png,gif}', { import: 'default' })).map(async ([path, value]) => {
+    const imageProps = await value()
+    return getImage({ src: imageProps, widths: [384, 600, 1200, 1920, 2560] })
+}).sort(() => Math.random() - 0.5)
+
+const images = await Promise.all(imagesPromises)
+
+const mappedImages = images.map((image) => {
+    return {
+        src: image.src,
+        srcSet: image.srcSet.attribute,
+        sizes: "(max-width: 640px) 600px, 384px",
+        width: image.attributes.width,
+        height: image.attributes.height,
+        alt: "Uh oh, something went wrong, could not retrieve the description",
+    } satisfies OptimizedImage
+})
+
+const breakpoints = {
+    640: 2,
+    768: 3,
+    1024: 4,
+}
 ---
 <MainGridLayout title={i18n(I18nKey.about)} description={i18n(I18nKey.about)}>
     <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
@@ -17,6 +47,7 @@ const { Content } = await aboutPost.render()
             <Markdown class="mt-2">
                 <Content />
             </Markdown>
+            <MasonryGallery client:load imageList={mappedImages} breakpoints={breakpoints} />
         </div>
     </div>
 </MainGridLayout>
