@@ -9,7 +9,6 @@ draft: false
 
 Optimizing images in a modern web project often feels like chasing the perfect balance between performance and aesthetics—until you realize how many hidden pitfalls lie beneath the surface. In my journey to build a visually striking Next.js site, I discovered that even powerful tools like next/image come with their own set of challenges, from **battling** layout shifts to **wrestling** with third-party masonry galleries that refused to cooperate. What started as a simple goal—to create a seamless, fast-loading image grid—turned into a deep dive into aspect ratios, lazy loading **quirks**, and the surprising importance of pixel-perfect placeholders. Here’s how I navigated **broken** npm packages, **reinvented** a masonry layout **from scratch**, and learned that sometimes, the right solution isn’t just about using the right tools—it’s about **bending them to your will**.
 
-
 # Why use `next/image`?
 
 1. **Performance Optimization**: Automatic resizing and modern format support.
@@ -37,7 +36,7 @@ Images are cached automatically by Next.js in `<distDir>/cache/images` — you
 
 I always thought that masonry galleries are cool. So I thought I might use one. It didn’t work so great when I installed one from an npm package, so I thought I might create one myself. I figured I would create a vertical one (it is easier to do).
 
-Creating the columns is quite easy, we just create a grid. Displaying images in a column isn’t a big deal either. Using flex we can make sure they neatly follow each other. 
+Creating the columns is quite easy, we just create a grid. Displaying images in a column isn’t a big deal either. Using flex we can make sure they neatly follow each other.
 
 ```tsx
 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -71,14 +70,13 @@ Creating the columns is quite easy, we just create a grid. Displaying images in 
 </div>
 ```
 
-The big question is how to distribute the images ***between*** the columns.
+The big question is how to distribute the images **_between_** the columns.
 
-The task is to split the columns evenly, so visually they all appear the same length. 
+The task is to split the columns evenly, so visually they all appear the same length.
 
-> *But what do we base it on?*
-> 
+> _But what do we base it on?_
 
-Well you can’t base it on height nor width, they are dynamic. They change based on the size of the window. What we actually need is the **ratio**. ****However, we do not want the aspect ratio of width divided by height, we need the ratio of height divided by width. 
+Well you can’t base it on height nor width, they are dynamic. They change based on the size of the window. What we actually need is the **ratio**. \*\*\*\*However, we do not want the aspect ratio of width divided by height, we need the ratio of height divided by width.
 
 This is because what we actually need is how much longer/shorter is the height of the image compared to the width. The width in our case is the same for all images, but the height depends on the image’s aspect ratio.
 
@@ -95,24 +93,27 @@ It would seem like we have a total of `4 x 1 + 2 x 2 = 8`, which in turn would m
 
 ![Bad Example](./example.png)
 
-But if we calculate the aspect ratio as height divided by width, we get this: 
+But if we calculate the aspect ratio as height divided by width, we get this:
 
 `4 x 1 + 2 x 1/2 = 5`
 
-This suggests that we can split it equally if we have the aspect ratios sum on both sides equal to 2.5. This way it could look something like this: 
+This suggests that we can split it equally if we have the aspect ratios sum on both sides equal to 2.5. This way it could look something like this:
 
 ![Good Example](./example2.png)
 
 After torturing my coding assistants for a few hours **we** came up with this:
 
 ```tsx
-const splitImageArray = (imageList: {  
-	src: string;
-	alt: string;
-	width: number;
-	height: number;
-	key: string;
-}[], columnCount: number) => {
+const splitImageArray = (
+  imageList: {
+    src: string;
+    alt: string;
+    width: number;
+    height: number;
+    key: string;
+  }[],
+  columnCount: number,
+) => {
   if (columnCount < 2) {
     return [imageList];
   }
@@ -121,10 +122,10 @@ const splitImageArray = (imageList: {
     ...image,
     aspectRatio: image.height / image.width,
   }));
-  
+
   const columns = Array.from({ length: columnCount }, () => Array<TImage>());
   const columnAspectSums = Array<number>(columnCount).fill(0);
-  
+
   for (const image of list) {
     let targetColumnIndex = 0;
     let minAspectSum = columnAspectSums[0];
@@ -141,7 +142,7 @@ const splitImageArray = (imageList: {
   }
 
   return columns;
-}
+};
 ```
 
 # The importance of saving the information about the image
@@ -152,7 +153,7 @@ Let’s say you have a blog, and cache the images on cloudinary. Hypothetically,
 
 # Placeholders
 
-Let’s say you wanted to improve the service to the not so fortunate customers that are in the middle of nowhere or just happen to have very slow internet. You could add placeholder images for your actual images! There is a library called **Plaiceholder** for that. 
+Let’s say you wanted to improve the service to the not so fortunate customers that are in the middle of nowhere or just happen to have very slow internet. You could add placeholder images for your actual images! There is a library called **Plaiceholder** for that.
 
 So let’s say you have an image. You know just the URL (and maybe alternative text). You could build something like this:
 
@@ -199,7 +200,7 @@ From **Plaiceholder** you get the height, the width, the source, and the **Plaic
 }
 ```
 
-Setting the `placeholder` to `blur` and `blurDataURL`  to the `base64` that we get from the **Plaiceholder.** 
+Setting the `placeholder` to `blur` and `blurDataURL` to the `base64` that we get from the **Plaiceholder.**
 
 ```tsx
 <Image

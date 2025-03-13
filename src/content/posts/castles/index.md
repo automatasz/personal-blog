@@ -6,6 +6,7 @@ tags: [Images]
 category: Artificial Intelligence
 draft: false
 ---
+
 These images showcase castles surrounded by lush gardens, bathed in vibrant, natural light. The bright and cheerful atmosphere highlights the beauty and grandeur of these structures.
 
 ![Beautiful castle and garden](./tmp81zn7btd.png)
