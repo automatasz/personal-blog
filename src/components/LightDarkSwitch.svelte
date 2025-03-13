@@ -18,7 +18,7 @@ onMount(() => {
   mode = getStoredTheme()
   const darkModePreference = window.matchMedia('(prefers-color-scheme: dark)')
   type ChangeListener = Parameters<typeof darkModePreference.addEventListener<'change'>>[1];
-  const changeThemeWhenSchemeChanged: ChangeListener = () => {
+  const changeThemeWhenSchemeChanged: ChangeListener = (_event) => {
     applyThemeToDocument(mode)
   }
   darkModePreference.addEventListener('change', changeThemeWhenSchemeChanged)
