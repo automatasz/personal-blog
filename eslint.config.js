@@ -1,28 +1,54 @@
-import eslintPluginAstro from "eslint-plugin-astro";
-import { defineConfig, globalIgnores } from "eslint/config";
+// @ts-check
 
-export default defineConfig([
-  ...eslintPluginAstro.configs.recommended,
+import eslintPluginAstro from 'eslint-plugin-astro';
+import eslint from '@eslint/js';
+import { defineConfig } from 'eslint/config';
+import svelte from 'eslint-plugin-svelte';
+import tseslint from 'typescript-eslint';
+import svelteConfig from './svelte.config.js';
+import globals from 'globals';
+
+export default defineConfig([  
+  eslint.configs.recommended,
   {
-    rules: {
-      "eol-last": [
-        "error",
-        "always",
-      ],
-      "semi": [
-        "error",
-        "always",
-      ],
-      "quotes": [
-        "error",
-        "double",
-      ],
-      // override/add rules settings here, such as:
-      // "astro/no-set-html-directive": "error"
-    },
+    ignores: [
+      "node_modules/",
+      ".vscode/",
+      ".github/",
+      ".astro/",
+      "dist/",
+    ],
   },
-  globalIgnores([
-    ".astro/*",
-    "dist/*",
-  ]),
+  {
+    files: ['**/*.astro'],
+    extends: [eslintPluginAstro.configs.all],
+  },
+  {
+    files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
+    extends: [svelte.configs.recommended],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
+      parserOptions: {
+        projectService: true,
+        extraFileExtensions: ['.svelte'], // Add support for additional file extensions, such as .svelte
+        parser: tseslint.parser,
+        svelteConfig
+      }
+    }
+  },
+  {
+    files: ['**/*.js'],
+    extends: [eslint.configs.recommended],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    }
+  },
+  {
+    files: ['**/*.ts'],
+    extends: [tseslint.configs.recommended],
+  }
 ]);
