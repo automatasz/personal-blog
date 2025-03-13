@@ -24,12 +24,11 @@ const fakeResult = [
     excerpt: 'Try running <mark>npm build && npm preview</mark> instead.',
   },
 ]
-
-let search: Function; 
+let search = async (_keyword: string, _isDesktop: boolean) => {}; 
 
 onMount(() => {
   search = async (keyword: string, isDesktop: boolean) => {
-    let panel = document.getElementById('search-panel')
+    const panel = document.getElementById('search-panel')
     if (!panel) return
 
     if (!keyword && isDesktop) {
