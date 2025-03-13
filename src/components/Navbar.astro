@@ -99,30 +99,36 @@ let links: NavBarLink[] = navBarConfig.links.map((item: NavBarLink | LinkPreset)
 
   function loadButtonScript() {
     const switchBtn = document.getElementById("scheme-switch");
-    if (switchBtn) {
-      switchBtn.addEventListener("click", function () {
+    if (switchBtn && !switchBtn.onclick) {
+      switchBtn.onclick = function () {
         switchTheme();
-      });
+      };
     }
 
     const settingBtn = document.getElementById("display-settings-switch");
-    if (settingBtn) {
-      settingBtn.addEventListener("click", function () {
+    if (settingBtn && !settingBtn.onclick) {
+      settingBtn.onclick = function () {
         const settingPanel = document.getElementById("display-setting");
         if (settingPanel) {
           settingPanel.classList.toggle("float-panel-closed");
         }
-      });
+      };
+      // settingBtn.addEventListener("click", function () {
+      //   const settingPanel = document.getElementById("display-setting");
+      //   if (settingPanel) {
+      //     settingPanel.classList.toggle("float-panel-closed");
+      //   }
+      // });
     }
 
     const menuBtn = document.getElementById("nav-menu-switch");
-    if (menuBtn) {
-      menuBtn.addEventListener("click", function () {
+    if (menuBtn && !menuBtn.onclick) {
+      menuBtn.onclick = function () {
         const menuPanel = document.getElementById("nav-menu-panel");
         if (menuPanel) {
           menuPanel.classList.toggle("float-panel-closed");
         }
-      });
+      };
     }
   }
 
