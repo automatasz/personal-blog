@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import type { OptimizedImage } from "@/types/masonry-gallery";
   import PhotoSwipeLightbox from "photoswipe/lightbox";
+  import { onMount } from "svelte";
 
-  let { imageList, breakpoints }: { imageList: OptimizedImage[]; breakpoints: Record<number, number> } = $props();
+  const { imageList, breakpoints }: { imageList: OptimizedImage[]; breakpoints: Record<number, number> } = $props();
   let images: OptimizedImage[][] = $state([]);
 
   function splitImageArray(columnCount: number) {
@@ -22,7 +22,7 @@
     const columnAspectSums = Array<number>(columnCount).fill(0);
 
     for (const image of list) {
-      let targetColumnIndex = columnAspectSums.indexOf(Math.min(...columnAspectSums));
+      const targetColumnIndex = columnAspectSums.indexOf(Math.min(...columnAspectSums));
       columns[targetColumnIndex].push(image);
       columnAspectSums[targetColumnIndex] += image.aspectRatio;
     }
@@ -105,9 +105,9 @@
 </script>
 
 <div class={`grid ${columnMapping(images.length)} gap-4 pswp-gallery mt-2.5`} id="gallery">
-  {#each images as imageColumn}
+  {#each images as imageColumn (imageColumn)}
     <div class="flex flex-col gap-4">
-      {#each imageColumn as image}
+      {#each imageColumn as image (image)}
         <a
           class="group relative h-auto w-full overflow-hidden rounded-lg cursor-zoom-in"
           href={image.src}

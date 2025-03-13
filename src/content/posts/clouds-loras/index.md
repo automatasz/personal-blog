@@ -35,7 +35,7 @@ Let's illustrate the versatility of LORA with examples. Using the prompt `<lora:
 
 ![01087-1239317158-4857-_lora_bb3l15_1_, soft pink clouds, black starry background in the style of bb3l15.png](./clouds2.png)
 
-In contrast, adjusting the prompt to prioritize realism, such as using the **Deliberate** model, yields a more lifelike depiction of clouds with nuanced textures and lighting. 
+In contrast, adjusting the prompt to prioritize realism, such as using the **Deliberate** model, yields a more lifelike depiction of clouds with nuanced textures and lighting.
 
 ![01076-2692481901-4624-_lora_bb3l15_1_, soft pink clouds, black starry background in the style of bb3l15.png](./clouds1.png)
 
@@ -47,4 +47,4 @@ Beyond mere image generation, LORA offers boundless opportunities for creative e
 
 ## **Embracing the Future of Cloud Artistry**
 
-In conclusion, LORA represents a revolutionary approach to image generation, offering users unprecedented control and versatility in crafting *(in this case)* clouds of varying styles and realism levels. As we continue to push the boundaries of creativity and technology, let us embrace the transformative power of LORA to inspire new forms of artistic expression and imagination.
+In conclusion, LORA represents a revolutionary approach to image generation, offering users unprecedented control and versatility in crafting _(in this case)_ clouds of varying styles and realism levels. As we continue to push the boundaries of creativity and technology, let us embrace the transformative power of LORA to inspire new forms of artistic expression and imagination.

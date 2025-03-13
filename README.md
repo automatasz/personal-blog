@@ -1,6 +1,6 @@
 # Static Astro personal blog website
 
-Template used to create this website - 🍥Fuwari 
+Template used to create this website - 🍥Fuwari
 
 A static blog template built with [Astro](https://astro.build).
 
@@ -36,7 +36,7 @@ image: ./cover.jpg
 tags: [Foo, Bar]
 category: Front-end
 draft: false
-lang: jp      # Set only if the post's language differs from the site's language in `config.ts`
+lang: jp # Set only if the post's language differs from the site's language in `config.ts`
 ---
 ```
 
@@ -45,7 +45,7 @@ lang: jp      # Set only if the post's language differs from the site's language
 All commands are run from the root of the project, from a terminal:
 
 | Command                             | Action                                           |
-|:------------------------------------|:-------------------------------------------------|
+| :---------------------------------- | :----------------------------------------------- |
 | `pnpm install` AND `pnpm add sharp` | Installs dependencies                            |
 | `pnpm dev`                          | Starts local dev server at `localhost:4321`      |
 | `pnpm build`                        | Build your production site to `./dist/`          |

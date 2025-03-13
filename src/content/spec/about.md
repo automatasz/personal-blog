@@ -1,6 +1,6 @@
 # About
 
-The cat in the photo is our cat named Myla. She is both very friendly and extremely dangerous. 
+The cat in the photo is our cat named Myla. She is both very friendly and extremely dangerous.
 
 All images on the website are created or captured by me.
 
