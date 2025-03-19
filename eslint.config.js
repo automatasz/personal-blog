@@ -45,7 +45,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.mjs', '**/*.cjs'],
     extends: [eslint.configs.recommended],
     languageOptions: {
       globals: {
