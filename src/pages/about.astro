@@ -4,10 +4,6 @@ import { getEntry, render } from "astro:content";
 import { i18n } from "@i18n/translation";
 import I18nKey from "@i18n/i18nKey";
 import Markdown from "@components/misc/Markdown.astro";
-import MasonryGallery from "@components/MasonryGallery.svelte";
-import { getImage } from "astro:assets";
-import type { OptimizedImage } from "@/types/masonry-gallery";
-import type { ImageMetadata } from "astro";
 
 const aboutPost = await getEntry("spec", "about");
 
@@ -17,34 +13,6 @@ if (!aboutPost) {
 }
 
 const { Content } = await render(aboutPost);
-
-const imagesPromises = Object.values(
-  import.meta.glob<ImageMetadata>("/src/assets/gallery/*.{jpeg,jpg,png,gif}", { import: "default" })
-)
-  .map(async (value) => {
-    const imageProps = await value();
-    return getImage({ src: imageProps, widths: [384, 600, 1200, 1920, 2560] });
-  })
-  .sort(() => Math.random() - 0.5);
-
-const images = await Promise.all(imagesPromises);
-
-const mappedImages = images.map((image) => {
-  return {
-    src: image.src,
-    srcSet: image.srcSet.attribute,
-    sizes: "(max-width: 640px) 600px, 384px",
-    width: image.attributes.width,
-    height: image.attributes.height,
-    alt: "Uh oh, something went wrong, could not retrieve the description",
-  } satisfies OptimizedImage;
-});
-
-const breakpoints = {
-  640: 2,
-  768: 3,
-  1024: 4,
-};
 ---
 
 <MainGridLayout description={i18n(I18nKey.about)} title={i18n(I18nKey.about)}>
@@ -53,7 +21,6 @@ const breakpoints = {
       <Markdown class="mt-2">
         <Content />
       </Markdown>
-      <MasonryGallery breakpoints={breakpoints} client:load imageList={mappedImages} />
     </div>
   </div>
 </MainGridLayout>

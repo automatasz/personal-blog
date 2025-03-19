@@ -111,22 +111,6 @@ export default defineConfig({
       ],
     ],
   },
-  vite: {
-    build: {
-      rollupOptions: {
-        onwarn(warning, warn) {
-          // temporarily suppress this warning
-          if (
-            warning.message.includes("is dynamically imported by") &&
-            warning.message.includes("but also statically imported by")
-          ) {
-            return;
-          }
-          warn(warning);
-        },
-      },
-    },
-  },
   env: {
     schema: {
       POSTHOG_API_KEY: envField.string({ context: "client", access: "public", optional: false, startsWith: "phc_" }),
