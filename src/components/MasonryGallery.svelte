@@ -92,6 +92,22 @@
 
   const columnMapping = (columnCount: number) => {
     switch (columnCount) {
+      case 12:
+        return "grid-cols-12";
+      case 11:
+        return "grid-cols-11";
+      case 10:
+        return "grid-cols-10";
+      case 9:
+        return "grid-cols-9";
+      case 8:
+        return "grid-cols-8";
+      case 7:
+        return "grid-cols-7";
+      case 6:
+        return "grid-cols-6";
+      case 5:
+        return "grid-cols-5";
       case 4:
         return "grid-cols-4";
       case 3:
