@@ -22,7 +22,7 @@ const isPublic = src.startsWith("/");
 // https://github.com/withastro/astro/issues/3373
 let img;
 if (isLocal) {
-  const files = import.meta.glob<ImageMetadata>("../../**", {
+  const files = import.meta.glob<ImageMetadata>("../../**/*.{jpeg,jpg,png,gif}", {
     import: "default",
   });
   let normalizedPath = path.normalize(path.join("../../", basePath, src)).replace(/\\/g, "/");
