@@ -117,4 +117,12 @@ export default defineConfig({
       POSTHOG_API_HOST: envField.string({ context: "client", access: "public", optional: false, startsWith: "https://" }),
     },
   },
+  experimental: {
+    responsiveImages: true,
+  },
+  image: {
+    // Used for all Markdown images; not configurable per-image
+    // Used for all `<Image />` and `<Picture />` components unless overridden with a prop
+    experimentalLayout: 'responsive',
+  },
 });
