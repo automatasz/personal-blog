@@ -7,7 +7,7 @@ import type {
 import { LinkPreset } from "@/types/config";
 
 export const siteConfig: SiteConfig = {
-  title: "Automatas.tech",
+  title: "Matash.eu",
   subtitle: "Exploring technology, programming, and life through code",
   lang: "en", // 'en', 'zh_CN', 'zh_TW', 'ja', 'ko', 'es', 'th'
   themeColor: {
