@@ -24,16 +24,9 @@ export const POST: APIRoute = async ({ request }) => {
       purpose: "user_data",
     });
 
-    // const fileType = file.type.split('/')[1];
-    // const arrayBuffer = await file.arrayBuffer();
-    // const buffer = Buffer.from(arrayBuffer);
-    // const imageBase64 = buffer.toString('base64');
-
     const response = await inngest.send({
       name: "keyworder/image.describe",
       data: {
-        // imageBase64,
-        // fileType,
         fileId: uploadedFile.id,
       },
     });
