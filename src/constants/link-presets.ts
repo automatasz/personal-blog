@@ -19,4 +19,8 @@ export const LinkPresets: { [key in LinkPreset]: NavBarLink } = {
     name: i18n(I18nKey.gallery),
     url: "/gallery/",
   },
+  [LinkPreset.Keyworder]: {
+    name: i18n(I18nKey.keyworder),
+    url: "/keyworder/",
+  },
 };
