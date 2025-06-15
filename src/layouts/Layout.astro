@@ -215,6 +215,7 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
     BANNER_HEIGHT_EXTEND,
     MAIN_PANEL_OVERLAPS_BANNER_HEIGHT,
   } from "@/constants/constants";
+  import { HIDE_SIDEBAR_LINKS } from "@/constants/hide-sidebar-links";
 
   /* Preload fonts */
   // (async function() {
@@ -351,6 +352,28 @@ function disableAnimation() {
   /* Load settings when entering the site */
   init();
 
+  function toggleSidebar(url: string) {
+    const sidebar = document.getElementById("sidebar");
+    const mainGrid = document.getElementById("main-grid");
+
+    if (!sidebar || !mainGrid) return;
+
+    const shouldHideSidebar = HIDE_SIDEBAR_LINKS.some((route) => url.includes(route));
+
+    if (shouldHideSidebar) {
+      sidebar.style.display = "none";
+      mainGrid.classList.remove("grid-cols-[17.5rem_auto]");
+      mainGrid.classList.add("grid-cols-1");
+    } else {
+      sidebar.style.display = "";
+      mainGrid.classList.add("grid-cols-[17.5rem_auto]");
+      mainGrid.classList.remove("grid-cols-1");
+    }
+  }
+
+  // Check on initial page load
+  toggleSidebar(window.location.pathname);
+
   const setup = () => {
     // TODO: temp solution to change the height of the banner
     /*
@@ -383,6 +406,8 @@ function disableAnimation() {
     });
     window.swup.hooks.on("content:replace", initCustomScrollbar);
     window.swup.hooks.on("visit:start", (visit: { to: { url: string } }) => {
+      toggleSidebar(visit.to.url);
+
       // change banner height immediately when a link is clicked
       const bodyElement = document.querySelector("body");
       if (pathsEqual(visit.to.url, url("/"))) {
