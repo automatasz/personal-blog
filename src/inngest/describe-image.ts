@@ -2,15 +2,9 @@ import { inngest } from "./client";
 import { OpenAI } from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { OPENAI_API_KEY } from "astro:env/server";
-import { z } from "zod";
+import { descriptionSchema } from "@/inngest/types";
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
-
-const descriptionSchema = z.object({
-  title: z.string(),
-  description: z.string(),
-  keyword: z.array(z.string()),
-})
 
 export default inngest.createFunction(
   { id: "image-describe" },
