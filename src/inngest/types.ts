@@ -4,6 +4,7 @@ type DemoEventSent = {
   name: "keyworder/image.describe";
   data: {
     fileId: string;
+    userId: string;
   };
 };
 
