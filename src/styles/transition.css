@@ -19,13 +19,33 @@ html.is-animating .transition-swup-fade {
 }
 
 @keyframes fade-out-down {
-    0% {
+    from {
         transform: translateY(0);
         opacity: 1;
+        display: block;
     }
-    100% {
+    to {
         transform: translateY(2rem);
         opacity: 0;
+        display: none;
+    }
+}
+
+@keyframes grid-columns-get-wider {
+    from {
+        grid-template-columns: 17.5rem auto;
+    }
+    to {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+}
+
+@keyframes grid-columns-get-narrower {
+    from {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    to {
+        grid-template-columns: 17.5rem auto;
     }
 }
 
@@ -39,7 +59,7 @@ html.is-animating .transition-swup-fade {
     animation-delay: 0ms
 }
 #sidebar {
-    animation-delay: 100ms
+    animation-delay: 250ms
 }
 .sidebar-hide {
     opacity: 1;
@@ -58,6 +78,18 @@ html.is-animating .transition-swup-fade {
 }
 #banner-credit {
     animation-delay: 400ms;
+}
+.main-grid-widen {
+    grid-template-columns: 17.5rem auto;
+    animation: 200ms grid-columns-get-wider;
+    animation-fill-mode: forwards;
+    animation-delay: 0ms;
+}
+.main-grid-narrow {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    animation: 200ms grid-columns-get-narrower;
+    animation-fill-mode: forwards;
+    animation-delay: 0ms;
 }
 
 /* Post content */

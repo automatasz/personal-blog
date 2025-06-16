@@ -440,6 +440,21 @@ function disableAnimation() {
       sidebar.classList.remove("onload-animation");
       sidebar.classList.add("sidebar-hide");
     });
+    window.swup.hooks.on("animation:out:end", (visit: { to: { url: string } }) => {
+      const mainGrid = document.getElementById("main-grid");
+      if (!mainGrid) {
+        return;
+      }
+
+      if (!HIDE_SIDEBAR_LINKS.some((link) => visit.to.url.includes(link))) {
+        mainGrid.classList.remove("grid-cols-1");
+        mainGrid.classList.add("grid-cols-[17.5rem_auto]");
+        return;
+      }
+
+      mainGrid.classList.remove("grid-cols-[17.5rem_auto]");
+      mainGrid.classList.add("grid-cols-1");
+    });
   };
   if (window?.swup?.hooks) {
     setup();
