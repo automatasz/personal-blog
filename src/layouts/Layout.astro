@@ -430,12 +430,13 @@ function disableAnimation() {
       if (!sidebar) {
         return;
       }
-      console.log(visit.to.url);
+
       if (!HIDE_SIDEBAR_LINKS.some((link) => visit.to.url.includes(link))) {
         sidebar.classList.remove("sidebar-hide");
         sidebar.classList.add("onload-animation");
         return;
       }
+
       sidebar.classList.remove("onload-animation");
       sidebar.classList.add("sidebar-hide");
     });
