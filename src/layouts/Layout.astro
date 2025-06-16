@@ -218,6 +218,16 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
   setClickOutsideToClose("nav-menu-panel", ["nav-menu-panel", "nav-menu-switch"]);
   setClickOutsideToClose("search-panel", ["search-panel", "search-bar", "search-switch"]);
 
+  // check show sidebar
+  if (window.location.pathname && HIDE_SIDEBAR_LINKS.some((link) => window.location.pathname.includes(link))) {
+    const sidebar = document.getElementById("sidebar");
+    sidebar?.classList.add("sidebar-hide", "hidden");
+    sidebar?.classList.add("onload-animation");
+    const mainGrid = document.getElementById("main-grid");
+    mainGrid?.classList.remove("grid-cols-[17.5rem_auto]");
+    mainGrid?.classList.add("grid-cols-1");
+  }
+
   // Load settings when entering the site
   init();
 
@@ -391,7 +401,7 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
       }
 
       if (!HIDE_SIDEBAR_LINKS.some((link) => visit.to.url.includes(link))) {
-        sidebar.classList.remove("sidebar-hide");
+        sidebar.classList.remove("sidebar-hide", "hidden");
         sidebar.classList.add("onload-animation");
         return;
       }
