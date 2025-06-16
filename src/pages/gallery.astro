@@ -43,7 +43,38 @@ const breakpoints = {
 <MainGridLayout description={i18n(I18nKey.gallery)} title={i18n(I18nKey.gallery)}>
   <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
     <div class="card-base z-10 px-9 py-6 relative w-full">
-      <MasonryGallery breakpoints={breakpoints} client:load imageList={mappedImages} />
+      <MasonryGallery breakpoints={breakpoints} client:load imageList={mappedImages}>
+        <div slot="fallback">
+          <div class="grid grid-cols-1 gap-4 pswp-gallery mt-2.5">
+            <div class="flex flex-col gap-4">
+              {
+                mappedImages.map((image) => (
+                  <a
+                    class="group relative h-auto w-full overflow-hidden rounded-lg cursor-zoom-in"
+                    data-pswp-height={image.height}
+                    data-pswp-srcset={image.srcSet}
+                    data-pswp-width={image.width}
+                    href={image.src}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    <img
+                      alt={image.alt}
+                      class="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      height={image.height}
+                      loading="lazy"
+                      sizes={image.sizes}
+                      src={image.src}
+                      srcset={image.srcSet}
+                      width={image.width}
+                    />
+                  </a>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+      </MasonryGallery>
     </div>
   </div>
 </MainGridLayout>
