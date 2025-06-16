@@ -201,12 +201,7 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
 
 <script>
   import "overlayscrollbars/overlayscrollbars.css";
-  import {
-    OverlayScrollbars,
-    // ScrollbarsHidingPlugin,
-    // SizeObserverPlugin,
-    // ClickScrollPlugin
-  } from "overlayscrollbars";
+  import { OverlayScrollbars } from "overlayscrollbars";
   import { getHue, getStoredTheme, setHue, setTheme } from "@utils/setting-utils";
   import { pathsEqual, url } from "@utils/url-utils";
   import {
@@ -217,51 +212,33 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
   } from "@/constants/constants";
   import { HIDE_SIDEBAR_LINKS } from "@/constants/hide-sidebar-links";
 
-  /* Preload fonts */
-  // (async function() {
-  // 	try {
-  // 		await Promise.all([
-  // 			document.fonts.load("400 1em Roboto"),
-  // 			document.fonts.load("700 1em Roboto"),
-  // 		]);
-  // 		document.body.classList.remove("hidden");
-  // 	} catch (error) {
-  // 		console.log("Failed to load fonts:", error);
-  // 	}
-  // })();
-
-  /* TODO This is a temporary solution for style flicker issue when the transition is activated */
-  /* issue link: https://github.com/withastro/astro/issues/8711, the solution get from here too */
-  /* update: fixed in Astro 3.2.4 */
-  /*
-function disableAnimation() {
-	const css = document.createElement('style')
-	css.appendChild(
-		document.createTextNode(
-			`*{
-              -webkit-transition:none!important;
-              -moz-transition:none!important;
-              -o-transition:none!important;
-              -ms-transition:none!important;
-              transition:none!important
-              }`
-		)
-	)
-	document.head.appendChild(css)
-
-	return () => {
-		// Force restyle
-		;(() => window.getComputedStyle(document.body))()
-
-		// Wait for next tick before removing
-		setTimeout(() => {
-			document.head.removeChild(css)
-		}, 1)
-	}
-}
-*/
-
   const bannerEnabled = !!document.getElementById("banner-wrapper");
+
+  setClickOutsideToClose("display-setting", ["display-setting", "display-settings-switch"]);
+  setClickOutsideToClose("nav-menu-panel", ["nav-menu-panel", "nav-menu-switch"]);
+  setClickOutsideToClose("search-panel", ["search-panel", "search-bar", "search-switch"]);
+
+  // Load settings when entering the site
+  init();
+
+  if (window?.swup?.hooks) {
+    setup();
+  } else {
+    document.addEventListener("swup:enable", setup);
+  }
+
+  const backToTopBtn = document.getElementById("back-to-top-btn");
+  const toc = document.getElementById("toc-wrapper");
+  const navbar = document.getElementById("navbar-wrapper");
+
+  window.onscroll = scrollFunction;
+
+  window.onresize = () => {
+    // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
+    let offset = Math.floor(window.innerHeight * (BANNER_HEIGHT_EXTEND / 100));
+    offset = offset - (offset % 4);
+    document.documentElement.style.setProperty("--banner-height-extend", `${offset}px`);
+  };
 
   function setClickOutsideToClose(panel: string, ignores: string[]) {
     document.addEventListener("click", (event) => {
@@ -277,9 +254,6 @@ function disableAnimation() {
       panelDom!.classList.add("float-panel-closed");
     });
   }
-  setClickOutsideToClose("display-setting", ["display-setting", "display-settings-switch"]);
-  setClickOutsideToClose("nav-menu-panel", ["nav-menu-panel", "nav-menu-switch"]);
-  setClickOutsideToClose("search-panel", ["search-panel", "search-bar", "search-switch"]);
 
   function loadTheme() {
     const theme = getStoredTheme();
@@ -349,22 +323,7 @@ function disableAnimation() {
     showBanner();
   }
 
-  /* Load settings when entering the site */
-  init();
-
-  const setup = () => {
-    // TODO: temp solution to change the height of the banner
-    /*
-	window.swup.hooks.on('animation:out:start', () => {
-		const path = window.location.pathname
-		const body = document.querySelector('body')
-		if (path[path.length - 1] === '/' && !body.classList.contains('is-home')) {
-			body.classList.add('is-home')
-		} else if (path[path.length - 1] !== '/' && body.classList.contains('is-home')) {
-			body.classList.remove('is-home')
-		}
-	})
-*/
+  function setup() {
     window.swup.hooks.on("link:click", () => {
       // Remove the delay for the first time page load
       document.documentElement.style.setProperty("--content-delay", "0ms");
@@ -455,16 +414,8 @@ function disableAnimation() {
       mainGrid.classList.remove("grid-cols-[17.5rem_auto]");
       mainGrid.classList.add("grid-cols-1");
     });
-  };
-  if (window?.swup?.hooks) {
-    setup();
-  } else {
-    document.addEventListener("swup:enable", setup);
   }
 
-  const backToTopBtn = document.getElementById("back-to-top-btn");
-  const toc = document.getElementById("toc-wrapper");
-  const navbar = document.getElementById("navbar-wrapper");
   function scrollFunction() {
     const bannerHeight = window.innerHeight * (BANNER_HEIGHT / 100);
 
@@ -501,14 +452,6 @@ function disableAnimation() {
       }
     }
   }
-  window.onscroll = scrollFunction;
-
-  window.onresize = () => {
-    // calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
-    let offset = Math.floor(window.innerHeight * (BANNER_HEIGHT_EXTEND / 100));
-    offset = offset - (offset % 4);
-    document.documentElement.style.setProperty("--banner-height-extend", `${offset}px`);
-  };
 </script>
 
 <script>
@@ -517,6 +460,12 @@ function disableAnimation() {
 
   let lightbox: PhotoSwipeLightbox;
   const pswp = import("photoswipe");
+
+  if (window.swup) {
+    setup();
+  } else {
+    document.addEventListener("swup:enable", setup);
+  }
 
   function createPhotoSwipe() {
     lightbox = new PhotoSwipeLightbox({
@@ -551,7 +500,7 @@ function disableAnimation() {
     lightbox.init();
   }
 
-  const setup = () => {
+  function setup() {
     if (!lightbox) {
       createPhotoSwipe();
     }
@@ -566,11 +515,5 @@ function disableAnimation() {
       },
       { before: true }
     );
-  };
-
-  if (window.swup) {
-    setup();
-  } else {
-    document.addEventListener("swup:enable", setup);
   }
 </script>
