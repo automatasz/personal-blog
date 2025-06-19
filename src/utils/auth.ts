@@ -15,7 +15,7 @@ export const auth = betterAuth({
         required: true,
         defaultValue: "user",
         input: false, // don't allow user to set role
-      }
+      },
     },
   },
   session: {
@@ -24,7 +24,7 @@ export const auth = betterAuth({
     cookieCache: {
       enabled: true,
       maxAge: 300, // cache duration in seconds
-    }
+    },
   },
   account: {
     modelName: "keyworder.account",
@@ -39,6 +39,6 @@ export const auth = betterAuth({
     google: {
       clientId: GOOGLE_AUTH_CLIENT_ID,
       clientSecret: GOOGLE_AUTH_CLIENT_SECRET,
-    }
+    },
   },
-})
+});
