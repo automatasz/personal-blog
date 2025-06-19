@@ -18,12 +18,13 @@ import { GithubCardComponent } from "./src/plugins/rehype-component-github-card.
 import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
+import vercel from "@astrojs/vercel";
 
 // https://astro.build/config
 export default defineConfig({
   site: "https://matash.eu/",
   base: "/",
-  trailingSlash: "always",
+  trailingSlash: "ignore",
   integrations: [
     tailwind({
       nesting: true,
@@ -115,6 +116,14 @@ export default defineConfig({
     schema: {
       POSTHOG_API_KEY: envField.string({ context: "client", access: "public", optional: false, startsWith: "phc_" }),
       POSTHOG_API_HOST: envField.string({ context: "client", access: "public", optional: false, startsWith: "https://" }),
+      OPENAI_API_KEY: envField.string({ context: "server", access: "secret", optional: false }),
+      DATABASE_URL: envField.string({ context: "server", access: "secret", optional: false }),
+      GOOGLE_AUTH_CLIENT_ID: envField.string({ context: "server", access: "secret", optional: false }),
+      GOOGLE_AUTH_CLIENT_SECRET: envField.string({ context: "server", access: "secret", optional: false }),
+      INNGEST_API_URL: envField.string({ context: "server", access: "secret", optional: false }),
+      INNGEST_SIGNING_KEY: envField.string({ context: "server", access: "secret", optional: false }),
+      UPLOADTHING_TOKEN: envField.string({ context: "server", access: "secret", optional: false }),
+      UPLOADTHING_APP_ID: envField.string({ context: "server", access: "secret", optional: false }),
     },
   },
   experimental: {
@@ -125,4 +134,5 @@ export default defineConfig({
     // Used for all `<Image />` and `<Picture />` components unless overridden with a prop
     experimentalLayout: 'responsive',
   },
+  adapter: vercel(),
 });
