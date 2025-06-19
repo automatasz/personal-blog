@@ -20,45 +20,47 @@ export const postFiles = defineAction({
   }),
   handler: async (input, context) => {
     const userId = await checkIfAdminAndGetUserId(context.request.headers);
-
+    const batchId = crypto.randomUUID();
     const uploadedthings = await uploadthing.uploadFiles(input.files);
 
-    const eventPromises = [];
-
-    const batchId = crypto.randomUUID();
     for (const file of uploadedthings) {
-      if (file.data) {
-        eventPromises.push(inngest.send({
-          name: "keyworder/image.describe",
-          data: {
-            fileId: file.data.key,
-            userId,
-            batchId,
-          },
-        }));
-      }
-      else {
+      if (file.error) {
         throw file.error;
       }
-    }
 
-    // const events = await Promise.all(eventPromises);
+      sendEvent(file.data.key, userId, batchId);
+    }
 
     return batchId;
   },
 });
 
+async function sendEvent(fileId: string, userId: string, batchId: string) {
+  return inngest.send({
+    name: "keyworder/image.describe",
+    data: {
+      fileId,
+      userId,
+      batchId,
+    },
+  });
+}
+
 async function checkIfAdminAndGetUserId(headers: Headers) {
   const session = await auth.api.getSession({ headers });
 
   if (!session?.session) {
-    throw new ActionError({ code: "UNAUTHORIZED",
-      message: "You must be signed in" });
+    throw new ActionError({
+      code: "UNAUTHORIZED",
+      message: "You must be signed in",
+    });
   }
 
   if (session.user.role !== "admin") {
-    throw new ActionError({ code: "FORBIDDEN",
-      message: "You must have access to this feature" });
+    throw new ActionError({
+      code: "FORBIDDEN",
+      message: "You must have access to this feature",
+    });
   }
 
   return session.user.id;
