@@ -4,7 +4,8 @@ enum I18nKey {
   gallery = "gallery",
   archive = "archive",
   search = "search",
-  keyworder = "Keyworder",
+  keyworder = "keyworder",
+  batch = "batch",
 
   tags = "tags",
   categories = "categories",
