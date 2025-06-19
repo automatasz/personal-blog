@@ -1,15 +1,13 @@
-// @ts-check
+import eslintPluginAstro from "eslint-plugin-astro";
+import eslint from "@eslint/js";
+import { defineConfig } from "eslint/config";
+import svelte from "eslint-plugin-svelte";
+import tseslint from "typescript-eslint";
+import svelteConfig from "./svelte.config.js";
+import globals from "globals";
+import stylistic from "@stylistic/eslint-plugin";
 
-import eslintPluginAstro from 'eslint-plugin-astro';
-import eslint from '@eslint/js';
-import { defineConfig } from 'eslint/config';
-import svelte from 'eslint-plugin-svelte';
-import tseslint from 'typescript-eslint';
-import svelteConfig from './svelte.config.js';
-import globals from 'globals';
-
-export default defineConfig([  
-  eslint.configs.recommended,
+export default defineConfig([
   {
     ignores: [
       "node_modules/",
@@ -19,42 +17,50 @@ export default defineConfig([
       "dist/",
     ],
   },
+  // Common recommended rules
+  eslint.configs.recommended,
+
   {
-    files: ['**/*.astro'],
-    extends: [eslintPluginAstro.configs.all],
     rules: {
-      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "no-multiple-empty-lines": ["error", { max: 1 }],
+      "no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "eol-last": 1,
     },
   },
   {
-    files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
+    files: ["**/*.astro"],
+    plugins: { astro: eslintPluginAstro },
+    extends: [eslintPluginAstro.configs.all],
+  },
+  {
+    files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],
     extends: [svelte.configs.recommended],
     languageOptions: {
-      globals: {
-        ...globals.browser,
-      },
+      globals: { ...globals.browser },
       parserOptions: {
         projectService: true,
-        extraFileExtensions: ['.svelte'], // Add support for additional file extensions, such as .svelte
+        extraFileExtensions: [".svelte"], // Add support for additional file extensions, such as .svelte
         parser: tseslint.parser,
-        svelteConfig
-      }
-    },
-    rules: {
-      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+        svelteConfig,
+      },
     },
   },
   {
-    files: ['**/*.js', '**/*.mjs', '**/*.cjs'],
-    extends: [eslint.configs.recommended],
+    files: ["**/*.ts"],
+    extends: [tseslint.configs.strict, tseslint.configs.stylistic, stylistic.configs.customize({
+      indent: 2,
+      quotes: "double",
+      semi: true,
+      commaDangle: "always-multiline",
+      jsx: false,
+    })],
+    rules: {
+      "@stylistic/object-property-newline": 1,
+    },
     languageOptions: {
       globals: {
         ...globals.node,
       },
-    }
+    },
   },
-  {
-    files: ['**/*.ts'],
-    extends: [tseslint.configs.recommended],
-  }
 ]);
