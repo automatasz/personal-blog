@@ -122,6 +122,7 @@ export default defineConfig({
       GOOGLE_AUTH_CLIENT_SECRET: envField.string({ context: "server", access: "secret", optional: false }),
       INNGEST_API_URL: envField.string({ context: "server", access: "secret", optional: false }),
       INNGEST_SIGNING_KEY: envField.string({ context: "server", access: "secret", optional: false }),
+      UPLOADTHING_TOKEN: envField.string({ context: "server", access: "secret", optional: false }),
     },
   },
   experimental: {
