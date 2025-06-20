@@ -23,13 +23,16 @@ export const postFiles = defineAction({
     const batchId = crypto.randomUUID();
     const uploadedthings = await uploadthing.uploadFiles(input.files);
 
-    for (const file of uploadedthings) {
+    const events = uploadedthings.map((file) => {
       if (file.error) {
         throw file.error;
       }
 
-      sendEvent(file.data.key, userId, batchId);
-    }
+      return sendEvent(file.data.key, userId, batchId);
+    });
+
+    // make sure events were dispatched
+    await Promise.all(events);
 
     return batchId;
   },
