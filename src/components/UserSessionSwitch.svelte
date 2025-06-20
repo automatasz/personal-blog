@@ -5,9 +5,9 @@
   const signIn = () => {
     authClient.signIn.social({
       provider: "google",
-      callbackURL: "/keyworder/",
+      callbackURL: "/",
       errorCallbackURL: "/error/",
-      newUserCallbackURL: "/keyworder/",
+      newUserCallbackURL: "/",
     });
   };
 
@@ -15,7 +15,7 @@
     authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          window.location.href = "/keyworder/";
+          window.location.href = "/";
         },
       },
     });
@@ -26,8 +26,7 @@
   <button aria-label="Sign In or Sign Out" class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90">
     <Icon class="text-[1.25rem]" icon="material-symbols:autorenew-rounded" />
   </button>
-{/if}
-{#if !$session.isPending && !$session.isRefetching && $session.data?.user.id}
+{:else if $session.data}
   <button
     aria-label="Sign Out"
     class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90"
@@ -35,8 +34,7 @@
   >
     <Icon class="text-[1.25rem]" icon="material-symbols:logout" />
   </button>
-{/if}
-{#if !$session.isPending && !$session.isRefetching && !$session.data?.user.id}
+{:else}
   <button aria-label="Sign In" class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90" onclick={signIn}>
     <Icon class="text-[1.25rem]" icon="material-symbols:login" />
   </button>

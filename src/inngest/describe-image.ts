@@ -8,15 +8,18 @@ import { UPLOADTHING_APP_ID } from "astro:env/server";
 export default inngest.createFunction(
   { id: "image-describe" },
   { event: "keyworder/image.describe" },
-  async ({ event, step, runId }) => {
+  async ({ event, step }) => {
     const parseResponse = openai.responses.parse.bind(openai.responses);
 
     const initialInsert = await step.run("job.save", async () => {
+      if (!event.id) {
+        throw new Error("event id is not set");
+      }
       const record = await db.withSchema("keyworder").insertInto("description")
         .values({
           file_id: event.data.fileId,
           user_id: event.data.userId,
-          job_id: runId,
+          job_id: event.id,
           batch_id: event.data.batchId,
         })
         .returningAll()

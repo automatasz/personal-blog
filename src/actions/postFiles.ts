@@ -1,8 +1,8 @@
-import { auth } from "@utils/auth";
-import { ActionError, defineAction } from "astro:actions";
+import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { inngest } from "@/inngest";
 import { uploadthing } from "@utils/storage";
+import { checkIfAdminAndGetUserId } from "@utils/actions";
 
 export const postFiles = defineAction({
   accept: "form",
@@ -23,13 +23,16 @@ export const postFiles = defineAction({
     const batchId = crypto.randomUUID();
     const uploadedthings = await uploadthing.uploadFiles(input.files);
 
-    for (const file of uploadedthings) {
+    const events = uploadedthings.map((file) => {
       if (file.error) {
         throw file.error;
       }
 
-      sendEvent(file.data.key, userId, batchId);
-    }
+      return sendEvent(file.data.key, userId, batchId);
+    });
+
+    // make sure events were dispatched
+    await Promise.all(events);
 
     return batchId;
   },
@@ -44,24 +47,4 @@ async function sendEvent(fileId: string, userId: string, batchId: string) {
       batchId,
     },
   });
-}
-
-async function checkIfAdminAndGetUserId(headers: Headers) {
-  const session = await auth.api.getSession({ headers });
-
-  if (!session?.session) {
-    throw new ActionError({
-      code: "UNAUTHORIZED",
-      message: "You must be signed in",
-    });
-  }
-
-  if (session.user.role !== "admin") {
-    throw new ActionError({
-      code: "FORBIDDEN",
-      message: "You must have access to this feature",
-    });
-  }
-
-  return session.user.id;
 }

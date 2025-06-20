@@ -114,8 +114,8 @@ export default defineConfig({
   },
   env: {
     schema: {
-      POSTHOG_API_KEY: envField.string({ context: "client", access: "public", optional: false, startsWith: "phc_" }),
-      POSTHOG_API_HOST: envField.string({ context: "client", access: "public", optional: false, startsWith: "https://" }),
+      POSTHOG_API_KEY: envField.string({ context: "client", access: "public", optional: false }),
+      POSTHOG_API_HOST: envField.string({ context: "client", access: "public", optional: false }),
       OPENAI_API_KEY: envField.string({ context: "server", access: "secret", optional: false }),
       DATABASE_URL: envField.string({ context: "server", access: "secret", optional: false }),
       GOOGLE_AUTH_CLIENT_ID: envField.string({ context: "server", access: "secret", optional: false }),
@@ -125,9 +125,6 @@ export default defineConfig({
       UPLOADTHING_TOKEN: envField.string({ context: "server", access: "secret", optional: false }),
       UPLOADTHING_APP_ID: envField.string({ context: "server", access: "secret", optional: false }),
     },
-  },
-  experimental: {
-    responsiveImages: true,
   },
   image: {
     // Used for all Markdown images; not configurable per-image
