@@ -3,27 +3,18 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import ImageUploader from "@components/ImageUploader.svelte";
-import { actions } from "astro:actions";
-
-const result = Astro.getActionResult(actions.postFiles);
-
-if (result && !result.error) {
-  return Astro.redirect(`/batch/${result.data}`);
-}
 ---
 
 <MainGridLayout description={i18n(I18nKey.keyworder)} title={i18n(I18nKey.keyworder)}>
   <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
-    <div class="card-base z-10 px-9 py-6 relative w-full">
-      <form action={actions.postFiles} class="space-y-2" enctype="multipart/form-data" method="POST">
-        <h1 class="text-90 text-3xl font-black">Welcome to Keyworder</h1>
-        <p class="text-75">
-          Upload images that you would like to get descriptions for. The images will be uploaded to the server and a
-          description will be generated for each of them. You can then use the generated descriptions to add keywords to
-          your images in posts, photo stock websites or personal galleries.
-        </p>
-        <ImageUploader client:load />
-      </form>
+    <div class="card-base z-10 px-9 py-6 relative w-full space-y-2">
+      <h1 class="text-90 text-3xl font-black">Welcome to Keyworder</h1>
+      <p class="text-75">
+        Upload images that you would like to get descriptions for. The images will be uploaded to the server and a
+        description will be generated for each of them. You can then use the generated descriptions to add keywords to
+        your images in posts, photo stock websites or personal galleries.
+      </p>
+      <ImageUploader client:load />
     </div>
   </div>
 </MainGridLayout>
