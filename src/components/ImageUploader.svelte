@@ -81,7 +81,7 @@
 
     const formData = new FormData(event.target as HTMLFormElement);
     const { error, data } = await actions.postFiles(formData);
-    if (!error) navigate(`/batch/${data}`);
+    if (!error) navigate(`/batch?id=${data}`);
   }
 
   onDestroy(() => {
@@ -92,30 +92,15 @@
 </script>
 
 {#if isSubmitting}
-  <section class="text-75 grid grid-cols-1 md:grid-cols-2 gap-4">
+  <h3 class="font-black text-2xl text-90">Uploading...</h3>
+  <section class="text-75 grid grid-cols-2 md:grid-cols-3 gap-4">
     {#each images as image (image.file.name)}
-      <div transition:fade={{ duration: 300 }}>
-        <button
-          class="group relative h-auto w-full overflow-hidden rounded-lg cursor-pointer"
-          type="button"
-          onclick={() => removeImage(image.file.name)}
-        >
-          <img
-            class="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-110"
-            src={image.objectUrl}
-            alt={image.file.name}
-          />
-          <div
-            class="absolute inset-0 w-full h-full bg-transparent group-hover:bg-black/70 transition duration-300 z-10 text-white flex justify-center items-center"
-          >
-            <Icon
-              class="text-[4rem] opacity-0 group-hover:opacity-100 transition duration-300 scale-50 group-hover:scale-100"
-              icon="material-symbols:delete"
-            />
-          </div>
-        </button>
-        <p class="w-64 truncate font-bold text-sm px-2">{image.file.name}</p>
-        <p class="text-50 text-xs px-2">{image.file.size / 1000} KB</p>
+      <div class="group relative h-auto w-full overflow-hidden rounded-lg">
+        <img
+          class="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-110"
+          src={image.objectUrl}
+          alt={image.file.name}
+        />
       </div>
     {/each}
   </section>
