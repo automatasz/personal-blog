@@ -2,7 +2,7 @@
   import type { Description } from "@utils/db";
   import { onMount } from "svelte";
   import { actions } from "astro:actions";
-  // get props
+
   let { appId }: { appId: string } = $props();
   let batches: Description[] = $state([]);
   let batchId: string | null = $state(null);
