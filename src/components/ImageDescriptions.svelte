@@ -6,19 +6,22 @@
   let { appId }: { appId: string } = $props();
   let batches: Description[] = $state([]);
   let batchId: string | null = $state(null);
+  let attempts: number = $state(0);
 
   onMount(() => {
     const urlParams = new URLSearchParams(window.location.search);
     batchId = urlParams.get("id");
     if (batchId) {
-      fetchEventsComplete(batchId);
+      fetchBatch(batchId); // check if maybe it is already done, if not check if events are complete
     }
   });
 
-  function fetchBatches(id: string) {
+  function fetchBatch(id: string) {
     actions.getBatch({ batchId: id }).then((res) => {
       if (res.data) {
         batches = res.data;
+      } else {
+        fetchEventsComplete(id);
       }
       if (res.error) {
         throw res.error;
@@ -29,11 +32,12 @@
   function fetchEventsComplete(id: string) {
     actions.checkEventComplete({ batchId: id }).then((res) => {
       if (res.data?.complete) {
-        console.log("completed and fetching batches");
-        fetchBatches(id);
-      } else {
-        console.log("not yet complete, fetching again in a few seconds");
+        fetchBatch(id);
+      } else if (attempts < 5) {
         setTimeout(() => fetchEventsComplete(id), 5000);
+        attempts++;
+      } else {
+        throw new Error("events fetched too many attempts");
       }
       if (res.error) {
         throw res.error;
