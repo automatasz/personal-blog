@@ -93,7 +93,7 @@
 
 {#if isSubmitting}
   <h3 class="font-black text-2xl text-90">Uploading...</h3>
-  <section class="text-75 grid grid-cols-2 md:grid-cols-3 gap-4">
+  <section class="text-75 grid grid-cols-3 md:grid-cols-4 gap-4">
     {#each images as image (image.file.name)}
       <div class="group relative h-auto w-full overflow-hidden rounded-lg">
         <img

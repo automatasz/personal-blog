@@ -40,6 +40,6 @@ const imageStyle = `object-position: ${position}`;
 
 <div class:list={[className, "overflow-hidden relative"]} id={id}>
   <div class="transition absolute inset-0 dark:bg-black/10 bg-opacity-50 pointer-events-none"></div>
-  {isLocal && img && <Image alt={alt || ""} class:list={imageClass} src={img} style={imageStyle} />}
+  {isLocal && img && <Image alt={alt || ""} class:list={imageClass} loading="eager" src={img} style={imageStyle} />}
   {!isLocal && <img alt={alt || ""} class:list={imageClass} src={isPublic ? url(src) : src} style={imageStyle} />}
 </div>

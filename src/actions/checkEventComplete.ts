@@ -1,4 +1,4 @@
-import { defineAction } from "astro:actions";
+import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { checkIfAdminAndGetUserId } from "@utils/actions";
 import { db } from "@utils/db";
@@ -14,15 +14,21 @@ export const checkEventComplete = defineAction({
     const results = await db
       .withSchema("keyworder")
       .selectFrom("description")
-      .select(["description.job_id"])
+      .select(["description.job_id", "description.user_id"])
       .where("batch_id", "=", input.batchId)
-      .where("user_id", "=", userId)
       .execute();
+
+    if (results.some(description => description.user_id !== userId)) {
+      throw new ActionError({
+        code: "UNAUTHORIZED",
+        message: "You do not have access to these descriptions",
+      });
+    }
 
     const eventPromises = results.map(description => getIsRunComplete(description.job_id));
     const events = await Promise.all(eventPromises);
     return {
-      complete: events.every(event => event),
+      complete: events.length > 0 && events.every(event => event),
     };
   },
 });

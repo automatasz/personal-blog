@@ -8,7 +8,15 @@ import ImageDescriptions from "@components/ImageDescriptions.svelte";
 
 <MainGridLayout description={i18n(I18nKey.batch)} title={i18n(I18nKey.batch)}>
   <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
-    <div class="card-base z-10 px-9 py-6 relative w-full text-75">
+    <div class="card-base z-10 px-9 py-6 relative w-full text-75 space-y-2">
+      <h1 class="text-90 text-3xl font-black">Keyworder results</h1>
+      <p class="text-75">
+        Here are the results of the images you have uploaded to Keyworder. You can use the generated descriptions to add
+        keywords to your images in posts, photo stock websites or personal galleries.
+      </p>
+      <div class="pt-1">
+        <a class="transition link text-[var(--primary)] font-medium" href="/keyworder">go to upload</a>
+      </div>
       <ImageDescriptions appId={UPLOADTHING_APP_ID} client:load />
     </div>
   </div>
