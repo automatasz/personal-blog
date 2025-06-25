@@ -77,6 +77,7 @@
         class:current-theme-btn={mode === LIGHT_MODE}
         onclick={() => switchScheme(LIGHT_MODE)}
         aria-label="Light Mode"
+        role="menuitem"
       >
         <Icon icon="material-symbols:wb-sunny-outline-rounded" class="text-[1.25rem] mr-3"></Icon>
         {i18n(I18nKey.lightMode)}
@@ -86,6 +87,7 @@
         class:current-theme-btn={mode === DARK_MODE}
         onclick={() => switchScheme(DARK_MODE)}
         aria-label="Dark Mode"
+        role="menuitem"
       >
         <Icon icon="material-symbols:dark-mode-outline-rounded" class="text-[1.25rem] mr-3"></Icon>
         {i18n(I18nKey.darkMode)}
@@ -95,6 +97,7 @@
         class:current-theme-btn={mode === AUTO_MODE}
         onclick={() => switchScheme(AUTO_MODE)}
         aria-label="System Matching Mode"
+        role="menuitem"
       >
         <Icon icon="material-symbols:radio-button-partial-outline" class="text-[1.25rem] mr-3"></Icon>
         {i18n(I18nKey.systemMode)}
