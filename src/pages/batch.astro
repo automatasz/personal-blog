@@ -14,7 +14,9 @@ import ImageDescriptions from "@components/ImageDescriptions.svelte";
         Here are the results of the images you have uploaded to Keyworder. You can use the generated descriptions to add
         keywords to your images in posts, photo stock websites or personal galleries.
       </p>
-      <a class="transition link text-[var(--primary)] font-medium" href="/keyworder">go to upload</a>
+      <div class="pt-1">
+        <a class="transition link text-[var(--primary)] font-medium" href="/keyworder">go to upload</a>
+      </div>
       <ImageDescriptions appId={UPLOADTHING_APP_ID} client:load />
     </div>
   </div>
