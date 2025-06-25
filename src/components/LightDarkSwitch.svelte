@@ -59,13 +59,13 @@
     onclick={toggleScheme}
     onmouseenter={showPanel}
   >
-    <div class="absolute" class:opacity-0={mode !== LIGHT_MODE}>
+    <div class="absolute" class:opacity-0={mode !== LIGHT_MODE} aria-label="Light Mode">
       <Icon icon="material-symbols:wb-sunny-outline-rounded" class="text-[1.25rem]"></Icon>
     </div>
-    <div class="absolute" class:opacity-0={mode !== DARK_MODE}>
+    <div class="absolute" class:opacity-0={mode !== DARK_MODE} aria-label="Dark Mode">
       <Icon icon="material-symbols:dark-mode-outline-rounded" class="text-[1.25rem]"></Icon>
     </div>
-    <div class="absolute" class:opacity-0={mode !== AUTO_MODE}>
+    <div class="absolute" class:opacity-0={mode !== AUTO_MODE} aria-label="System Matching Mode">
       <Icon icon="material-symbols:radio-button-partial-outline" class="text-[1.25rem]"></Icon>
     </div>
   </button>
