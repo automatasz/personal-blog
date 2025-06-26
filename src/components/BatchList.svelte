@@ -3,7 +3,7 @@
   import { onMount } from "svelte";
   import { actions } from "astro:actions";
 
-  type DescriptionBatchId = Pick<Description, "batch_id" | "created_at">;
+  type DescriptionBatchId = Pick<Description, "batch_id"> & { created_at: string };
   let batches: DescriptionBatchId[] | undefined = $state(undefined);
   let errorMessage: string | undefined = $state(undefined);
 
@@ -18,7 +18,7 @@
         throw error;
       }
 
-      batches = data;
+      batches = data.map((batch) => ({ batch_id: batch.batch_id, created_at: batch.created_at.toLocaleString() }));
     });
   }
 </script>
