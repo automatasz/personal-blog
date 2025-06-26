@@ -7,9 +7,9 @@
   let batches: DescriptionBatchId[] | undefined = $state(undefined);
   let errorMessage: string | undefined = $state(undefined);
 
-  onMount(() => {
-    fetchBatches();
-  });
+  // onMount(() => {
+  //   fetchBatches();
+  // });
 
   function fetchBatches() {
     actions.getBatches().then(({ error, data }) => {
