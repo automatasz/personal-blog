@@ -15,7 +15,7 @@ import BatchList from "@components/BatchList.svelte";
         description will be generated for each of them. You can then use the generated descriptions to add keywords to
         your images in posts, photo stock websites or personal galleries.
       </p>
-      <ImageUploader client:load />
+      <ImageUploader client:only="svelte" />
       <BatchList client:load />
     </div>
   </div>
