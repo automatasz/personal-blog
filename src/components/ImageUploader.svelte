@@ -14,6 +14,7 @@
   let files: FileList | null = $state(null);
   let images: Image[] = $state([]);
   let isSubmitting: boolean = $state(false);
+  let errorMessage: string | undefined = $state(undefined);
 
   $effect(() => {
     const imageArray = updateImagesArray(
@@ -81,7 +82,12 @@
 
     const formData = new FormData(event.target as HTMLFormElement);
     const { error, data } = await actions.postFiles(formData);
-    if (!error) navigate(`/batch?id=${data}`);
+    if (error) {
+      errorMessage = error.message;
+      throw error;
+    }
+
+    navigate(`/batch?id=${data}`);
   }
 
   onDestroy(() => {
@@ -92,18 +98,22 @@
 </script>
 
 {#if isSubmitting}
-  <h3 class="font-black text-2xl text-90">Uploading...</h3>
-  <section class="text-75 grid grid-cols-3 md:grid-cols-4 gap-4">
-    {#each images as image (image.file.name)}
-      <div class="group relative h-auto w-full overflow-hidden rounded-lg">
-        <img
-          class="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-110"
-          src={image.objectUrl}
-          alt={image.file.name}
-        />
-      </div>
-    {/each}
-  </section>
+  {#if errorMessage}
+    <h3 class="text-red-600">Error when uploading files: {errorMessage}.</h3>
+  {:else}
+    <h3 class="font-black text-2xl text-90">Uploading...</h3>
+    <section class="text-75 grid grid-cols-3 md:grid-cols-4 gap-4">
+      {#each images as image (image.file.name)}
+        <div class="group relative h-auto w-full overflow-hidden rounded-lg">
+          <img
+            class="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-110"
+            src={image.objectUrl}
+            alt={image.file.name}
+          />
+        </div>
+      {/each}
+    </section>
+  {/if}
 {:else}
   <form onsubmit={submit} id="post-files">
     <div class="space-y-2 my-2">
