@@ -1,34 +1,18 @@
 import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { inngest } from "@/inngest";
-import { uploadthing } from "@utils/storage";
 import { checkIfAdminAndGetUserId } from "@utils/actions";
 
-export const postFiles = defineAction({
-  accept: "form",
+export const postFileIds = defineAction({
   input: z.object({
-    files: z.instanceof(File).refine(
-      file =>
-        [
-          "image/png",
-          "image/jpeg",
-          "image/jpg",
-          "image/webp",
-        ].includes(file.type),
-      { message: "Invalid image file type" },
-    ).array(),
+    fileIds: z.array(z.string()),
   }),
   handler: async (input, context) => {
     const userId = await checkIfAdminAndGetUserId(context.request.headers);
     const batchId = crypto.randomUUID();
-    const uploadedthings = await uploadthing.uploadFiles(input.files);
 
-    const events = uploadedthings.map((file) => {
-      if (file.error) {
-        throw file.error;
-      }
-
-      return sendEvent(file.data.key, userId, batchId);
+    const events = input.fileIds.map((id) => {
+      return sendEvent(id, userId, batchId);
     });
 
     // make sure events were dispatched
