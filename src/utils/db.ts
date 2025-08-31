@@ -30,11 +30,14 @@ export interface DescriptionTable {
   id: Generated<string>;
   job_id: string;
   file_id: string;
+  file_name: string | null;
   keywords: string[] | null;
   description: string | null;
   title: string | null;
   user_id: string;
   batch_id: string;
+  tokens_used: number | null;
+  result: string | null;
   created_at: ColumnType<Date, string | undefined, never>;
 }
 

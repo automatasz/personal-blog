@@ -1,12 +1,15 @@
 import { inngest } from "./client";
 import { zodTextFormat } from "openai/helpers/zod";
 import { descriptionSchema } from "@/inngest/types";
-import { db } from "@utils/db";
+import { db, type DescriptionUpdate } from "@utils/db";
 import { openai } from "@utils/ai";
 import { UPLOADTHING_APP_ID } from "astro:env/server";
 
 export default inngest.createFunction(
-  { id: "image-describe" },
+  {
+    id: "image-describe",
+    retries: 3,
+  },
   { event: "keyworder/image.describe" },
   async ({ event, step }) => {
     const parseResponse = openai.responses.parse.bind(openai.responses);
@@ -21,6 +24,7 @@ export default inngest.createFunction(
           user_id: event.data.userId,
           job_id: event.id,
           batch_id: event.data.batchId,
+          file_name: event.data.fileName,
         })
         .returningAll()
         .executeTakeFirstOrThrow();
@@ -55,13 +59,22 @@ export default inngest.createFunction(
     );
 
     const output = await step.run("image.save", async () => {
-      const description = descriptionSchema.parse(response.output_parsed);
+      const description = descriptionSchema.safeParse(response.output_parsed);
+
+      const descriptionUpdate: DescriptionUpdate = {
+        tokens_used: response.usage?.total_tokens,
+        result: "fail",
+      };
+
+      if (description.success) {
+        descriptionUpdate.description = description.data.description;
+        descriptionUpdate.title = description.data.title;
+        descriptionUpdate.keywords = description.data.keywords;
+        descriptionUpdate.result = "success";
+      }
+
       const record = await db.withSchema("keyworder").updateTable("description")
-        .set({
-          description: description.description,
-          title: description.title,
-          keywords: description.keywords,
-        })
+        .set(descriptionUpdate)
         .where("id", "=", initialInsert.id)
         .returningAll()
         .executeTakeFirstOrThrow();

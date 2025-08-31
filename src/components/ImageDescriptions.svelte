@@ -1,17 +1,19 @@
 <script lang="ts">
   import type { Description } from "@utils/db";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { actions } from "astro:actions";
   import ImageWithLoading from "./ImageWithLoading.svelte";
   import Icon from "@iconify/svelte";
-  import "@uploadthing/svelte/styles.css";
 
   let { appId }: { appId: string } = $props();
   let descriptions: Description[] | undefined = $state(undefined);
   let batchId: string | null = $state(null);
   let attempts: number = $state(0);
   let errorMessage: string | undefined = $state(undefined);
+  let timeoutId: number | undefined = $state(undefined);
+
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
   onMount(() => {
     const urlParams = new URLSearchParams(window.location.search);
     batchId = urlParams.get("id");
@@ -29,7 +31,7 @@
         throw error;
       }
 
-      if (data.length > 0 && data.every((image) => image.title && image.description)) {
+      if (data.length > 0 && data.every((image) => image.result || image.description)) {
         descriptions = data;
       } else {
         fetchEventsComplete(id);
@@ -47,7 +49,7 @@
       if (data.complete) {
         fetchBatch(id);
       } else if (attempts < 5) {
-        setTimeout(() => fetchEventsComplete(id), 5000);
+        timeoutId = setTimeout(() => fetchEventsComplete(id), 5000) as unknown as number;
         attempts++;
       } else {
         const message =
@@ -57,6 +59,12 @@
       }
     });
   }
+
+  onDestroy(() => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  });
 </script>
 
 <section class="text-75 divide-y-2 space-y-4 mt-2">
@@ -75,7 +83,13 @@
         </div>
         <div class="lg:col-span-2 p-1">
           <h3 class="font-black text-xl">{description.title}</h3>
-          <p class="text-sm text-50">file.png</p>
+          <p class="text-sm text-50">{description.file_name}</p>
+          {#if description.result !== "success"}
+            <p class="text-sm text-red-600">
+              The image description failed. Please try again and make sure the image does not contain content that
+              breaks the Terms of Service.
+            </p>
+          {/if}
           <p class="my-2">{description.description}</p>
           <div class="flex gap-2 flex-wrap">
             {#if description.keywords}

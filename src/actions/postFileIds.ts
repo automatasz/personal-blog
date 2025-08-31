@@ -5,14 +5,17 @@ import { checkIfAdminAndGetUserId } from "@utils/actions";
 
 export const postFileIds = defineAction({
   input: z.object({
-    fileIds: z.array(z.string()),
+    files: z.array(z.object({
+      id: z.string(),
+      name: z.string(),
+    })),
   }),
   handler: async (input, context) => {
     const userId = await checkIfAdminAndGetUserId(context.request.headers);
     const batchId = crypto.randomUUID();
 
-    const events = input.fileIds.map((id) => {
-      return sendEvent(id, userId, batchId);
+    const events = input.files.map((file) => {
+      return sendEvent(file.id, userId, batchId, file.name);
     });
 
     // make sure events were dispatched
@@ -22,13 +25,14 @@ export const postFileIds = defineAction({
   },
 });
 
-async function sendEvent(fileId: string, userId: string, batchId: string) {
+async function sendEvent(fileId: string, userId: string, batchId: string, fileName: string) {
   return inngest.send({
     name: "keyworder/image.describe",
     data: {
       fileId,
       userId,
       batchId,
+      fileName,
     },
   });
 }
