@@ -7,6 +7,7 @@ interface ImageDescribeEvent {
     fileId: string;
     userId: string;
     batchId: string;
+    fileName: string;
   };
 }
 

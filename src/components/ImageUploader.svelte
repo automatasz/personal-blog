@@ -37,7 +37,7 @@
     isSubmitting = true;
 
     const { error, data } = await actions.postFileIds({
-      fileIds: files.map((file) => file.key),
+      files: files.map((file) => ({ id: file.key, name: file.name })),
     });
 
     if (error) {
