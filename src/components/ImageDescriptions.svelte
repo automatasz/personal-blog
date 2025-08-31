@@ -4,7 +4,6 @@
   import { actions } from "astro:actions";
   import ImageWithLoading from "./ImageWithLoading.svelte";
   import Icon from "@iconify/svelte";
-  import "@uploadthing/svelte/styles.css";
 
   let { appId }: { appId: string } = $props();
   let descriptions: Description[] | undefined = $state(undefined);
