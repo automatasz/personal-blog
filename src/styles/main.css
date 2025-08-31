@@ -126,6 +126,10 @@
     .copy-btn.success .success-icon {
         @apply opacity-100
     }
+
+    .hide-input-for-uploadthing > input {
+      @apply sr-only
+    }
 }
 
 .custom-md img, #post-cover img {

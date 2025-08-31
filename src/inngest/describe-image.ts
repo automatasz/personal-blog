@@ -38,7 +38,7 @@ export default inngest.createFunction(
             content: [
               {
                 type: "input_text",
-                text: "You are a photography and SEO expert. You must generate 50 short, relevant keywords for an uploaded image. Use popular and descriptive keywords that help rank the image higher in stock websites.",
+                text: "You are a photography and SEO expert. You must generate 100 short, relevant keywords for an uploaded image. Use 100 popular and descriptive keywords that help rank the image higher in stock websites. In addition, create a compelling title and a long description that suit the image well",
               },
               {
                 type: "input_image",

@@ -3,6 +3,8 @@
   import { onMount } from "svelte";
   import { actions } from "astro:actions";
   import ImageWithLoading from "./ImageWithLoading.svelte";
+  import Icon from "@iconify/svelte";
+  import "@uploadthing/svelte/styles.css";
 
   let { appId }: { appId: string } = $props();
   let descriptions: Description[] | undefined = $state(undefined);
@@ -61,7 +63,7 @@
   {#if errorMessage}
     <p class="text-red-600">Error when displaying image descriptions: {errorMessage}.</p>
   {:else if !descriptions}
-    <p>Loading...</p>
+    <Icon class="text-[1.50rem]" icon="line-md:loading-loop" aria-label="loading" />
   {/if}
   {#if descriptions}
     {#each descriptions as description (description.id)}

@@ -14,23 +14,39 @@ export default defineConfig([
       ".vscode/",
       ".github/",
       ".astro/",
-      "dist/",
+      "dist/**",
     ],
-  },
-  // Common recommended rules
-  eslint.configs.recommended,
-
-  {
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
     rules: {
       "no-multiple-empty-lines": ["error", { max: 1 }],
       "no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
       "eol-last": 1,
     },
   },
+  // Common recommended rules
+  eslint.configs.recommended,
+  tseslint.configs.recommended,
+  eslintPluginAstro.configs.recommended,
   {
     files: ["**/*.astro"],
-    plugins: { astro: eslintPluginAstro },
-    extends: [eslintPluginAstro.configs.all],
+    languageOptions: {
+      parser: eslintPluginAstro.parser,
+      parserOptions: {
+        parser: tseslint.parser,
+        extraFileExtensions: [".astro"],
+        sourceType: "module",
+        ecmaVersion: "latest",
+        project: "./tsconfig.json",
+      },
+    },
+    rules: {
+      "no-undef": "off",
+    }
   },
   {
     files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],
