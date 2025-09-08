@@ -1,7 +1,10 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { authClient } from "@utils/auth-client";
+  import { navigate } from "astro:transitions/client";
+
   const session = authClient.useSession();
+
   const signIn = () => {
     authClient.signIn.social({
       provider: "google",
@@ -15,27 +18,74 @@
     authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          window.location.href = "/";
+          navigate("/");
         },
       },
     });
   };
+
+  function togglePannel() {
+    const panel = document.querySelector("#my-account-panel");
+    panel?.classList.toggle("float-panel-closed");
+  }
 </script>
 
-{#if $session.isPending || $session.isRefetching}
-  <button aria-label="Sign In or Sign Out" class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90">
-    <Icon class="text-[1.25rem]" icon="material-symbols:autorenew-rounded" />
-  </button>
-{:else if $session.data}
+<div class="relative" role="menu" tabindex="-1">
   <button
-    aria-label="Sign Out"
-    class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90"
-    onclick={signOut}
+    aria-label="My account settings"
+    role="menuitem"
+    class="relative btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90"
+    id="my-account-switch"
+    onclick={togglePannel}
   >
-    <Icon class="text-[1.25rem]" icon="material-symbols:logout" />
+    <div class="absolute" aria-label="Manage account">
+      <Icon class="text-[1.25rem]" icon="material-symbols:person-rounded" />
+    </div>
   </button>
-{:else}
-  <button aria-label="Sign In" class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90" onclick={signIn}>
-    <Icon class="text-[1.25rem]" icon="material-symbols:login" />
-  </button>
-{/if}
+
+  <div id="my-account-panel" class="hidden lg:block float-panel-closed absolute transition top-11 -right-2 pt-5">
+    <div class="card-base float-panel p-2">
+      <button
+        aria-label="Sign In or Sign Out"
+        class="flex transition whitespace-nowrap items-center !justify-start w-full dark:text-white/75 text-black/75 rounded-lg h-9 px-3 font-medium mb-0.5 cursor-default"
+      >
+        My Account
+      </button>
+      {#if $session.isPending || $session.isRefetching}
+        <button
+          aria-label="Sign In or Sign Out"
+          class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95 mb-0.5"
+        >
+          <Icon class="text-[1.25rem] mr-3" icon="material-symbols:autorenew-rounded" />
+          Loading
+        </button>
+      {:else if $session.data}
+        <button
+          aria-label="Profile"
+          class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95 mb-0.5"
+          onclick={() => navigate("/keyworder")}
+        >
+          <Icon class="text-[1.25rem] mr-3" icon="material-symbols:person-rounded" />
+          {$session.data.user.email}
+        </button>
+        <button
+          aria-label="Sign Out"
+          class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95 mb-0.5"
+          onclick={signOut}
+        >
+          <Icon class="text-[1.25rem] mr-3" icon="material-symbols:logout" />
+          Sign Out
+        </button>
+      {:else}
+        <button
+          aria-label="Sign In"
+          class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95 mb-0.5"
+          onclick={signIn}
+        >
+          <Icon class="text-[1.25rem] mr-3" icon="material-symbols:login" />
+          Sign In
+        </button>
+      {/if}
+    </div>
+  </div>
+</div>
