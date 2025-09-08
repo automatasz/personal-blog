@@ -19,7 +19,14 @@ export const postFileIds = defineAction({
     });
 
     // make sure events were dispatched
-    await Promise.all(events);
+    try {
+      await Promise.all(events);
+    }
+    catch (e) {
+      // display error in the console for inspection
+      console.error("batch id", batchId, "user id", userId, e);
+      throw new Error("Failed to start creating descriptions");
+    }
 
     return batchId;
   },

@@ -16,11 +16,12 @@
       return Promise.all(promises);
     },
     onClientUploadComplete: (res) => {
-      console.log(`onClientUploadComplete`, res);
       files = res.map((file) => ({ key: file.key, name: file.name, size: file.size, url: file.ufsUrl }));
     },
-    onUploadError: (error: Error) => {
-      alert(`ERROR! ${error.message}`);
+    onUploadError: (error) => {
+      if (error.code === "INTERNAL_CLIENT_ERROR") {
+        alert("Error: You have run out of tokens.");
+      }
     },
   });
 
@@ -52,7 +53,10 @@
 <div class="space-y-4 mt-12 mb-16">
   {#if isSubmitting}
     {#if errorMessage}
-      <h3 class="text-red-600">Error when uploading files: {errorMessage}.</h3>
+      <h3 class="text-red-600">
+        Error when uploading files: {errorMessage}. Please reach out to the administrator if this error continues to
+        occur.
+      </h3>
     {:else}
       <h3 class="font-black text-2xl text-90 flex flex-row gap-2 grow">
         Requesting descriptions...

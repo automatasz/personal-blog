@@ -1,5 +1,5 @@
 import { UPLOADTHING_TOKEN } from "astro:env/server";
-import { UTApi, createUploadthing, type FileRouter } from "uploadthing/server";
+import { UTApi, UploadThingError, createUploadthing, type FileRouter } from "uploadthing/server";
 import { checkIfAdminAndGetUserId } from "./actions";
 
 export const uploadthing = new UTApi({
@@ -27,7 +27,9 @@ export const ourFileRouter: FileRouter = {
       const user = await checkIfAdminAndGetUserId(req.headers);
 
       // If you throw, the user will not be able to upload
-      if (!user) throw new Error("Unauthorized");
+      if (!user) {
+        throw new UploadThingError("Unauthorized");
+      }
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
       return { userId: user };

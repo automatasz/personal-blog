@@ -217,6 +217,7 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
   setClickOutsideToClose("display-setting", ["display-setting", "display-settings-switch"]);
   setClickOutsideToClose("nav-menu-panel", ["nav-menu-panel", "nav-menu-switch"]);
   setClickOutsideToClose("search-panel", ["search-panel", "search-bar", "search-switch"]);
+  setClickOutsideToClose("my-account-panel", ["my-account-panel", "my-account-switch"]);
 
   // check show sidebar
   if (window.location.pathname && HIDE_SIDEBAR_LINKS.some((link) => window.location.pathname.includes(link))) {
