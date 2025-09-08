@@ -9,7 +9,9 @@
 
 {#if !$session.data}
   <UserSessionCard />
-{:else}
+{:else if $session.data.user.role === "admin"}
   <ImageUploader />
   <BatchList />
+{:else}
+  <p class="text-red-600">You don't have permission to use this feature.</p>
 {/if}
