@@ -132,4 +132,9 @@ export default defineConfig({
     layout: "constrained",
   },
   adapter: vercel(),
+  vite: {
+    build: {
+      cssCodeSplit: false,
+    }
+  }
 });
