@@ -20,3 +20,16 @@ export async function checkIfAdminAndGetUserId(headers: Headers) {
 
   return session.user.id;
 }
+
+export async function checkIfSignedInAndGetUserId(headers: Headers) {
+  const session = await auth.api.getSession({ headers });
+
+  if (!session?.session) {
+    throw new ActionError({
+      code: "UNAUTHORIZED",
+      message: "You must be signed in",
+    });
+  }
+
+  return session.user.id;
+}
