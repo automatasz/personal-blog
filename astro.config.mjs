@@ -39,7 +39,7 @@ export default defineConfig({
       cache: true,
       preload: true,
       accessibility: true,
-      updateHead: true,
+      updateHead: false,
       updateBodyClass: false,
       globalInstance: true,
     }),
