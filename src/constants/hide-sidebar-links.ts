@@ -1,1 +1,1 @@
-export const HIDE_SIDEBAR_LINKS = ["/gallery", "/keyworder", "/batch"];
+export const HIDE_SIDEBAR_LINKS = ["/gallery", "/keyworder", "/batch", "/my-account"];
