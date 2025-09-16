@@ -60,14 +60,14 @@
           Loading
         </button>
       {:else if $session.data}
-        <button
+        <a
           aria-label="Profile"
           class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95 mb-0.5"
-          onclick={() => navigate("/keyworder")}
+          href="/my-account/"
         >
           <Icon class="text-[1.25rem] mr-3" icon="material-symbols:person-rounded" />
           {$session.data.user.email}
-        </button>
+        </a>
         <button
           aria-label="Sign Out"
           class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95 mb-0.5"
