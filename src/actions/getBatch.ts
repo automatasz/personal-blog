@@ -1,4 +1,4 @@
-import { ActionError, defineAction } from "astro:actions";
+import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { checkIfAdminAndGetUserId } from "@utils/actions";
 import { db } from "@utils/db";
@@ -15,14 +15,8 @@ export const getBatch = defineAction({
       .selectFrom("description")
       .selectAll()
       .where("batch_id", "=", input.batchId)
+      .where("user_id", "=", userId)
       .execute();
-
-    if (results.some(description => description.user_id !== userId)) {
-      throw new ActionError({
-        code: "UNAUTHORIZED",
-        message: "You do not have access to these descriptions",
-      });
-    }
 
     return results;
   },
