@@ -40,7 +40,10 @@ let links: NavBarLink[] = navBarConfig.links.map((item: NavBarLink | LinkPreset)
           return (
             <a
               aria-label={l.name}
-              class="btn-plain scale-animation rounded-lg h-11 font-bold px-5 active:scale-95"
+              class:list={[
+                "btn-plain scale-animation rounded-lg h-11 font-bold px-5 active:scale-95",
+                l.requiresAuth && "authenticated-link",
+              ]}
               href={l.external ? l.url : url(l.url)}
               target={l.external ? "_blank" : null}
             >
@@ -89,6 +92,8 @@ let links: NavBarLink[] = navBarConfig.links.map((item: NavBarLink | LinkPreset)
 </div>
 
 <script>
+  import { authClientVanilla } from "@utils/auth-client";
+
   function switchTheme() {
     if (localStorage.theme === "dark") {
       document.documentElement.classList.remove("dark");
@@ -134,7 +139,24 @@ let links: NavBarLink[] = navBarConfig.links.map((item: NavBarLink | LinkPreset)
     }
   }
 
+  async function hideAuthenticatedLinks() {
+    const buttons = document.querySelectorAll(".authenticated-link");
+    if (buttons.length === 0) {
+      return;
+    }
+
+    const session = await authClientVanilla.getSession();
+    if (session.data?.user.id) {
+      return;
+    }
+
+    buttons.forEach((button) => {
+      button.classList.add("!hidden");
+    });
+  }
+
   loadButtonScript();
+  hideAuthenticatedLinks();
 </script>
 
 <script define:vars={{ scriptUrl: url("/pagefind/pagefind.js"), isProd: import.meta.env.PROD }} is:inline>

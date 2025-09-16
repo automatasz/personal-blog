@@ -1,6 +1,6 @@
 import type { AUTO_MODE, DARK_MODE, LIGHT_MODE } from "@constants/constants";
 
-export type SiteConfig = {
+export interface SiteConfig {
   title: string;
   subtitle: string;
 
@@ -26,13 +26,13 @@ export type SiteConfig = {
   };
 
   favicon: Favicon[];
-};
+}
 
-export type Favicon = {
+export interface Favicon {
   src: string;
   theme?: "light" | "dark";
   sizes?: string;
-};
+}
 
 export enum LinkPreset {
   Home = 0,
@@ -42,17 +42,18 @@ export enum LinkPreset {
   Keyworder = 4,
 }
 
-export type NavBarLink = {
+export interface NavBarLink {
   name: string;
   url: string;
   external?: boolean;
-};
+  requiresAuth?: boolean;
+}
 
-export type NavBarConfig = {
+export interface NavBarConfig {
   links: (NavBarLink | LinkPreset)[];
-};
+}
 
-export type ProfileConfig = {
+export interface ProfileConfig {
   avatar?: string;
   name: string;
   bio?: string;
@@ -61,20 +62,20 @@ export type ProfileConfig = {
     url: string;
     icon: string;
   }[];
-};
+}
 
-export type LicenseConfig = {
+export interface LicenseConfig {
   enable: boolean;
   name: string;
   url: string;
-};
+}
 
 export type LIGHT_DARK_MODE =
   | typeof LIGHT_MODE
   | typeof DARK_MODE
   | typeof AUTO_MODE;
 
-export type BlogPostData = {
+export interface BlogPostData {
   body: string;
   title: string;
   published: Date;
@@ -87,4 +88,4 @@ export type BlogPostData = {
   prevSlug?: string;
   nextTitle?: string;
   nextSlug?: string;
-};
+}
