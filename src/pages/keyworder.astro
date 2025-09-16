@@ -3,11 +3,6 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import KeyworderSvelte from "@components/Keyworder.svelte";
-import { actions } from "astro:actions";
-
-export const prerender = false;
-
-const stats = await Astro.callAction(actions.getStats, null);
 ---
 
 <MainGridLayout description={i18n(I18nKey.keyworder)} title={i18n(I18nKey.keyworder)}>
@@ -27,9 +22,6 @@ const stats = await Astro.callAction(actions.getStats, null);
         <li>Press Describe button to get the descriptions!</li>
         <li>Patiently wait until it is done...</li>
       </ol>
-      <p class="text-75">
-        {JSON.stringify(stats.data, null, 2)}
-      </p>
       <KeyworderSvelte client:load />
     </div>
   </div>

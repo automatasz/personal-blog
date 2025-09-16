@@ -1,0 +1,26 @@
+---
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import CounterOfBatchesAndImages from "@components/CounterOfBatchesAndImages.svelte";
+import BatchList from "@components/BatchList.svelte";
+import { actions } from "astro:actions";
+
+export const prerender = false;
+
+const { data, error } = await Astro.callAction(actions.getStats, null);
+---
+
+<MainGridLayout description={i18n(I18nKey.batch)} title={i18n(I18nKey.batch)}>
+  <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+    <div class="card-base z-10 px-9 py-6 relative w-full text-75 space-y-2">
+      <h1 class="text-90 text-3xl font-black">My account</h1>
+      <p class="text-75">
+        This is your account page. Here you can find your information and manage your account. The subscription details
+        are also available here.
+      </p>
+      <CounterOfBatchesAndImages client:load stats={data} error={error?.message} />
+      <BatchList client:load />
+    </div>
+  </div>
+</MainGridLayout>

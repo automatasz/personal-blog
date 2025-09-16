@@ -9,7 +9,11 @@ export const getBatches = defineAction({
     return db
       .withSchema("keyworder")
       .selectFrom("description")
-      .select(["batch_id", db.fn.min("created_at").as("created_at")])
+      .select([
+        "batch_id",
+        db.fn.min("created_at").as("created_at"),
+        db.fn.count<number>("id").as("number_of_images"),
+      ])
       .where("user_id", "=", userId)
       .groupBy("batch_id")
       .orderBy("created_at", "desc")
