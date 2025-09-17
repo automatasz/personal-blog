@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { GOOGLE_AUTH_CLIENT_ID, GOOGLE_AUTH_CLIENT_SECRET } from "astro:env/server";
+import { GOOGLE_AUTH_CLIENT_ID, GOOGLE_AUTH_CLIENT_SECRET, BETTER_AUTH_TRUSTED_ORIGINS } from "astro:env/server";
 import { dialect } from "@utils/db";
 
 export const auth = betterAuth({
@@ -41,4 +41,7 @@ export const auth = betterAuth({
       clientSecret: GOOGLE_AUTH_CLIENT_SECRET,
     },
   },
+  trustedOrigins: BETTER_AUTH_TRUSTED_ORIGINS
+    ? [BETTER_AUTH_TRUSTED_ORIGINS]
+    : undefined,
 });
