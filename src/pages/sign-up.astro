@@ -1,0 +1,74 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { i18n } from "@i18n/translation";
+import I18nKey from "@i18n/i18nKey";
+import { auth } from "@utils/auth";
+
+export const prerender = false;
+
+if (Astro.request.method === "POST") {
+  try {
+    const data = await Astro.request.formData();
+    const name = data.get("username");
+    const email = data.get("email");
+    const password = data.get("password");
+    if (typeof name === "string" && typeof email === "string" && typeof password === "string") {
+      const data = await auth.api.signUpEmail({
+        body: {
+          name,
+          email,
+          password,
+        },
+      });
+
+      console.log(data);
+    } else {
+      throw new Error("Received incomplete form");
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message);
+    }
+  }
+}
+---
+
+<MainGridLayout description={i18n(I18nKey.batch)} title={i18n(I18nKey.batch)}>
+  <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+    <div class="card-base z-10 px-9 py-6 relative w-full text-75 space-y-2">
+      <h1 class="text-90 text-3xl font-black">Sign up</h1>
+      <form class="space-y-2" method="POST">
+        <div>
+          <label for="username" class="text-xs text-50">Username *</label>
+          <input
+            id="username"
+            class="block bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06] dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10 outline-0 text-black/50 dark:text-white/50 rounded-lg h-11 text-sm px-2"
+            name="username"
+            type="text"
+            placeholder="Username"
+            required
+          />
+        </div>
+        <label for="email" class="text-xs text-50">Email *</label>
+        <input
+          id="email"
+          class="block bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06] dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10 outline-0 text-black/50 dark:text-white/50 rounded-lg h-11 text-sm px-2"
+          name="email"
+          type="email"
+          placeholder="Email"
+          required
+        />
+        <label for="password" class="text-xs text-50">Password *</label>
+        <input
+          id="password"
+          class="block bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06] dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10 outline-0 text-black/50 dark:text-white/50 rounded-lg h-11 text-sm px-2"
+          name="password"
+          type="password"
+          placeholder="Password"
+          required
+        />
+        <button class="btn-regular p-3 rounded-md active:scale-90">Submit</button>
+      </form>
+    </div>
+  </div>
+</MainGridLayout>
