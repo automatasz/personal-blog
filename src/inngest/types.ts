@@ -5,9 +5,7 @@ interface ImageDescribeEvent {
   name: "keyworder/image.describe";
   data: {
     fileId: string;
-    userId: string;
-    batchId: string;
-    fileName: string;
+    descriptionId: string;
   };
 }
 

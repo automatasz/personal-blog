@@ -14,23 +14,6 @@ export default inngest.createFunction(
   async ({ event, step }) => {
     const parseResponse = openai.responses.parse.bind(openai.responses);
 
-    const initialInsert = await step.run("job.save", async () => {
-      if (!event.id) {
-        throw new Error("event id is not set");
-      }
-      const record = await db.withSchema("keyworder").insertInto("description")
-        .values({
-          file_id: event.data.fileId,
-          user_id: event.data.userId,
-          job_id: event.id,
-          batch_id: event.data.batchId,
-          file_name: event.data.fileName,
-        })
-        .returningAll()
-        .executeTakeFirstOrThrow();
-      return record;
-    });
-
     const response = await step.ai.wrap(
       "openai.wrap.image.describe",
       parseResponse,
@@ -75,7 +58,7 @@ export default inngest.createFunction(
 
       const record = await db.withSchema("keyworder").updateTable("description")
         .set(descriptionUpdate)
-        .where("id", "=", initialInsert.id)
+        .where("id", "=", event.data.descriptionId)
         .returningAll()
         .executeTakeFirstOrThrow();
       return record;
