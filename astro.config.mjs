@@ -124,6 +124,7 @@ export default defineConfig({
       INNGEST_SIGNING_KEY: envField.string({ context: "server", access: "secret", optional: false }),
       UPLOADTHING_TOKEN: envField.string({ context: "server", access: "secret", optional: false }),
       UPLOADTHING_APP_ID: envField.string({ context: "server", access: "secret", optional: false }),
+      VERCEL_BRANCH_URL: envField.string({ context: "server", access: "secret", optional: true }),
     },
   },
   image: {

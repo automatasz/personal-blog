@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { GOOGLE_AUTH_CLIENT_ID, GOOGLE_AUTH_CLIENT_SECRET } from "astro:env/server";
+import { GOOGLE_AUTH_CLIENT_ID, GOOGLE_AUTH_CLIENT_SECRET, VERCEL_BRANCH_URL } from "astro:env/server";
 import { dialect } from "@utils/db";
 
 export const auth = betterAuth({
@@ -41,4 +41,5 @@ export const auth = betterAuth({
       clientSecret: GOOGLE_AUTH_CLIENT_SECRET,
     },
   },
+  trustedOrigins: VERCEL_BRANCH_URL ? [`https://${VERCEL_BRANCH_URL}`] : undefined,
 });

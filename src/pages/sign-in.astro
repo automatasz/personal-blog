@@ -1,0 +1,71 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { i18n } from "@i18n/translation";
+import I18nKey from "@i18n/i18nKey";
+---
+
+<MainGridLayout description={i18n(I18nKey.batch)} title={i18n(I18nKey.batch)}>
+  <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+    <div class="card-base z-10 px-9 py-6 relative w-full text-75 space-y-2">
+      <h1 class="text-90 text-3xl font-black">Sign up</h1>
+      <form class="space-y-2" method="POST" id="sign-in-form">
+        <div>
+          <label for="email" class="text-xs text-50">Email *</label>
+          <input
+            id="email"
+            class="block bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06] dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10 outline-0 text-black/50 dark:text-white/50 rounded-lg h-11 text-sm px-2"
+            name="email"
+            type="email"
+            placeholder="Email"
+            required
+          />
+        </div>
+        <div>
+          <label for="password" class="text-xs text-50">Password *</label>
+          <input
+            id="password"
+            class="block bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06] dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10 outline-0 text-black/50 dark:text-white/50 rounded-lg h-11 text-sm px-2"
+            name="password"
+            type="password"
+            placeholder="Password"
+            required
+          />
+        </div>
+        <button class="btn-regular p-3 rounded-md active:scale-90">Submit</button>
+      </form>
+    </div>
+  </div>
+</MainGridLayout>
+
+<script>
+  import { authClientVanilla } from "@utils/auth-client";
+
+  const form = document.getElementById("sign-in-form");
+
+  if (form) {
+    form.onsubmit = submit;
+  }
+
+  async function submit(e: SubmitEvent) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const email = formData.get("email");
+    const password = formData.get("password");
+    if (typeof email !== "string" || typeof password !== "string") {
+      alert("The form was submitted incorrectly. Please try again later.");
+      throw new Error("email or password is not string");
+    }
+    authClientVanilla.signIn
+      .email({
+        email,
+        password,
+        callbackURL: "/keyworder",
+      })
+      .then((res) => {
+        if (res.error) {
+          alert("error");
+          throw res.error;
+        }
+      });
+  }
+</script>

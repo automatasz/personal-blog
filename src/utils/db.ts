@@ -28,7 +28,6 @@ interface Tables {
 
 export interface DescriptionTable {
   id: Generated<string>;
-  job_id: string;
   file_id: string;
   file_name: string | null;
   keywords: string[] | null;
