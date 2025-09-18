@@ -2,33 +2,6 @@
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { i18n } from "@i18n/translation";
 import I18nKey from "@i18n/i18nKey";
-
-// export const prerender = false;
-
-// if (Astro.request.method === "POST") {
-//   try {
-//     const data = await Astro.request.formData();
-//     const email = data.get("email");
-//     const password = data.get("password");
-//     if (typeof email === "string" && typeof password === "string") {
-//       const data = await auth.api.signInEmail({
-//         body: {
-//           email,
-//           password,
-//           callbackURL: "/keyworder",
-//         },
-//       });
-
-//       console.log(data);
-//     } else {
-//       throw new Error("Received incomplete form");
-//     }
-//   } catch (error) {
-//     if (error instanceof Error) {
-//       console.error(error.message);
-//     }
-//   }
-// }
 ---
 
 <MainGridLayout description={i18n(I18nKey.batch)} title={i18n(I18nKey.batch)}>
@@ -82,10 +55,17 @@ import I18nKey from "@i18n/i18nKey";
       alert("The form was submitted incorrectly. Please try again later.");
       throw new Error("email or password is not string");
     }
-    authClientVanilla.signIn.email({
-      email,
-      password,
-      callbackURL: "/keyworder",
-    });
+    authClientVanilla.signIn
+      .email({
+        email,
+        password,
+        callbackURL: "/keyworder",
+      })
+      .then((res) => {
+        if (res.error) {
+          alert("error");
+          throw res.error;
+        }
+      });
   }
 </script>
