@@ -16,6 +16,7 @@ export interface Database {
   session: Tables["keyworder.session"];
   account: Tables["keyworder.account"];
   verification: Tables["keyworder.verification"];
+  batch: Tables["keyworder.batch"];
 }
 
 interface Tables {
@@ -24,7 +25,18 @@ interface Tables {
   "keyworder.session": SessionTable;
   "keyworder.account": AccountTable;
   "keyworder.verification": VerificationTable;
+  "keyworder.batch": BatchTable;
 }
+
+export interface BatchTable {
+  id: string;
+  title: string | null;
+  created_at: ColumnType<Date, string | undefined, never>;
+}
+
+export type Batch = Selectable<BatchTable>;
+export type NewBatch = Insertable<BatchTable>;
+export type BatchUpdate = Updateable<BatchTable>;
 
 export interface DescriptionTable {
   id: Generated<string>;

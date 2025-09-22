@@ -15,4 +15,8 @@ export const descriptionSchema = z.object({
   keywords: z.array(z.string()),
 });
 
+export const batchSchema = z.object({
+  title: z.string(),
+});
+
 export const schemas = new EventSchemas().fromUnion<ImageDescribeEvent>();
