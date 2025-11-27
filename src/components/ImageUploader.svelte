@@ -3,20 +3,51 @@
   import { fade } from "svelte/transition";
   import { actions } from "astro:actions";
   import { navigate } from "astro:transitions/client";
-  import { createUploader, UploadButton, minifyImage } from "@utils/storage-client";
+  import {
+    createUploader,
+    UploadButton,
+    minifyImage,
+  } from "@utils/storage-client";
   import { twMerge } from "tailwind-merge";
+  import ImageWithLoading from "./ImageWithLoading.svelte";
+  import { UPLOADTHING_APP_ID } from "astro:env/client";
+
+  type FileForUpload = {
+    key: string;
+    name: string;
+    size: number;
+    url: string;
+    width: number;
+    height: number;
+  };
 
   let isSubmitting: boolean = $state(false);
   let errorMessage: string | undefined = $state(undefined);
-  let files: { key: string; name: string; size: number; url: string }[] = $state([]);
+  let files: FileForUpload[] = $state([]);
+  let filesBeforeUpload: { width: number; height: number; file: File }[] =
+    $state([]);
 
   const uploader = createUploader("imageUploader", {
-    onBeforeUploadBegin: async (files) => {
-      const promises = files.map((file) => minifyImage(file));
-      return Promise.all(promises);
+    onBeforeUploadBegin: async (uploadedFiles) => {
+      const promises = uploadedFiles.map((file) => minifyImage(file));
+      const minifiedFiles = await Promise.all(promises);
+      filesBeforeUpload = minifiedFiles;
+      return minifiedFiles.map((file) => file.file);
     },
     onClientUploadComplete: (res) => {
-      files = res.map((file) => ({ key: file.key, name: file.name, size: file.size, url: file.ufsUrl }));
+      files = res.map((file) => {
+        const fileBeforeUpload = filesBeforeUpload.find(
+          (f) => f.file.name === file.name,
+        );
+        return {
+          key: file.key,
+          name: file.name,
+          size: file.size,
+          url: file.ufsUrl,
+          width: fileBeforeUpload?.width ?? 0,
+          height: fileBeforeUpload?.height ?? 0,
+        };
+      });
     },
     onUploadError: (error) => {
       if (error.code === "INTERNAL_CLIENT_ERROR") {
@@ -38,7 +69,12 @@
     isSubmitting = true;
 
     const { error, data } = await actions.postFileIds({
-      files: files.map((file) => ({ id: file.key, name: file.name })),
+      files: files.map((file) => ({
+        id: file.key,
+        name: file.name,
+        width: file.width,
+        height: file.height,
+      })),
     });
 
     if (error) {
@@ -54,20 +90,30 @@
   {#if isSubmitting}
     {#if errorMessage}
       <h3 class="text-red-600">
-        Error when uploading files: {errorMessage}. Please reach out to the administrator if this error continues to
-        occur.
+        Error when uploading files: {errorMessage}. Please reach out to the
+        administrator if this error continues to occur.
       </h3>
     {:else}
       <h3 class="font-black text-2xl text-90 flex flex-row gap-2 grow">
         Requesting descriptions...
-        <Icon class="text-[1.50rem]" icon="line-md:loading-loop" aria-label="loading" />
+        <Icon
+          class="text-[1.50rem]"
+          icon="line-md:loading-loop"
+          aria-label="loading"
+        />
       </h3>
     {/if}
   {:else}
     {#if files.length > 0}
       <form onsubmit={submit} id="post-files" class="flex flex-row gap-4">
-        <button class="btn-regular rounded-lg active:scale-90 py-3 px-6 cursor-pointer" type="submit">
-          Describe <Icon class="text-[1.50rem]" icon="material-symbols:upload" />
+        <button
+          class="btn-regular rounded-lg active:scale-90 py-3 px-6 cursor-pointer"
+          type="submit"
+        >
+          Describe <Icon
+            class="text-[1.50rem]"
+            icon="material-symbols:upload"
+          />
         </button>
         <button
           class="btn-regular rounded-lg active:scale-90 py-3 px-6 cursor-pointer"
@@ -95,7 +141,8 @@
       <h3 class="font-black text-2xl text-90">Selected Files</h3>
     {:else}
       <h3 class="text-75">
-        After selecting files, they will appear here. You can remove unwanted images by clicking them.
+        After selecting files, they will appear here. You can remove unwanted
+        images by clicking them.
       </h3>
     {/if}
     <section class="text-75 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -106,10 +153,14 @@
             type="button"
             onclick={() => removeImage(image.key)}
           >
-            <img
-              class="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-110"
-              src={image.url}
-              alt="User uploaded file"
+            <ImageWithLoading
+              description={{
+                file_id: image.key,
+                title: image.name,
+                width: image.width,
+                height: image.height,
+              }}
+              appId={UPLOADTHING_APP_ID}
             />
             <div
               class="absolute inset-0 w-full h-full bg-transparent group-hover:bg-black/70 transition duration-300 z-10 text-white flex justify-center items-center"

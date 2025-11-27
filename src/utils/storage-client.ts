@@ -21,5 +21,9 @@ export async function minifyImage(image: File, maxSize = 1024) {
     lastModified: Date.now(),
   });
 
-  return webpFile;
+  return {
+    file: webpFile,
+    width,
+    height,
+  };
 }

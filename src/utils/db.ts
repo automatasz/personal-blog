@@ -49,6 +49,8 @@ export interface DescriptionTable {
   batch_id: string;
   tokens_used: number | null;
   result: string | null;
+  width: number | null;
+  height: number | null;
   created_at: ColumnType<Date, string | undefined, never>;
 }
 
@@ -124,4 +126,5 @@ export const dialect = new PostgresDialect({
 
 export const db = new Kysely<Database>({
   dialect,
+  log: ["query", "error"],
 });

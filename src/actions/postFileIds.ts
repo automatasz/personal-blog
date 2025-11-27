@@ -9,6 +9,8 @@ export const postFileIds = defineAction({
     files: z.array(z.object({
       id: z.string(),
       name: z.string(),
+      width: z.number(),
+      height: z.number(),
     })),
   }),
   handler: async (input, context) => {
@@ -21,6 +23,8 @@ export const postFileIds = defineAction({
         user_id: userId,
         batch_id: batchId,
         file_name: file.name,
+        width: file.width,
+        height: file.height,
       })))
       .returningAll()
       .execute();

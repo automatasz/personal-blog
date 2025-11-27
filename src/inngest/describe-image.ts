@@ -3,7 +3,7 @@ import { zodTextFormat } from "openai/helpers/zod";
 import { batchSchema, descriptionSchema } from "@/inngest/types";
 import { db, type DescriptionUpdate } from "@utils/db";
 import { openai } from "@utils/ai";
-import { UPLOADTHING_APP_ID } from "astro:env/server";
+import { UPLOADTHING_APP_ID } from "astro:env/client";
 import { getBatchSuccessCount, getBatchTitles } from "@utils/utils.db";
 
 export default inngest.createFunction(
@@ -118,7 +118,14 @@ export default inngest.createFunction(
               id: output.description.batch_id,
               title: batchTitle.data.title,
             })
-            .executeTakeFirstOrThrow();
+            .executeTakeFirst()
+            .catch((e) => {
+              if (e.code === "23505") {
+                console.error(`Batch ${output.description.batch_id} already exists ant its title cannot be created`);
+                return;
+              }
+              throw e;
+            });
           return batchTitle.data.title;
         }
         return "No title was created";
