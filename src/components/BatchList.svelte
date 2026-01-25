@@ -24,8 +24,22 @@
         throw error;
       }
 
-      batches = data;
+      batches = data.map((batch) => ({
+        ...batch,
+        number_of_images: Number(batch.number_of_images),
+      }));
     });
+  }
+
+  function getImageLabel(numberOfImages: number) {
+    if (
+      numberOfImages === 1 ||
+      (numberOfImages !== 11 && numberOfImages !== 111 && numberOfImages % 10 === 1)
+    ) {
+      return "image";
+    }
+
+    return "images";
   }
 </script>
 
@@ -61,7 +75,7 @@
               </div>
               <div class="text-base text-50 font-extrabold">
                 {description.number_of_images}
-                {description.number_of_images > 1 ? "images" : "image"}
+                {getImageLabel(description.number_of_images)}
               </div>
               <div class="text-sm text-30">
                 {daysAgoWord(daysAgo(description.created_at))}

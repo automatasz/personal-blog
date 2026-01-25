@@ -14,7 +14,7 @@ export const getBatches = defineAction({
         "description.batch_id as id",
         "batch.title",
         db.fn.min("description.created_at").as("created_at"),
-        db.fn.count<number>("description.id").as("number_of_images"),
+        db.fn.count("description.id").as("number_of_images"),
       ])
       .where("description.user_id", "=", userId)
       .where("batch.title", "is not", null)
