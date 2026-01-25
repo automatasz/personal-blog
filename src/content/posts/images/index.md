@@ -3,7 +3,7 @@ title: Next.js image optimization lessons learned
 published: 2025-02-07
 description: Optimizing images in a modern web project often feels like chasing the perfect balance between performance and aesthetics—until you realize how many hidden pitfalls lie beneath the surface...
 tags: [Next.js, Optimization, Images]
-category: webdev
+category: Web Development
 draft: false
 ---
 
