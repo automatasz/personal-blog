@@ -5,6 +5,7 @@ import type { OurFileRouter } from "./storage";
 export const { createUploader } = generateSvelteHelpers<OurFileRouter>();
 
 export async function minifyImage(image: File, maxSize = 1024) {
+  const originalSize = image.size;
   const bitmap = await createImageBitmap(image);
 
   const { width, height } = bitmap;
@@ -25,5 +26,6 @@ export async function minifyImage(image: File, maxSize = 1024) {
     file: webpFile,
     width,
     height,
+    originalSize,
   };
 }
