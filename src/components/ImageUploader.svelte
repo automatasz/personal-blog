@@ -24,8 +24,12 @@
   let isSubmitting: boolean = $state(false);
   let errorMessage: string | undefined = $state(undefined);
   let files: FileForUpload[] = $state([]);
-  let filesBeforeUpload: { width: number; height: number; file: File }[] =
-    $state([]);
+  let filesBeforeUpload: {
+    width: number;
+    height: number;
+    file: File;
+    originalSize: number;
+  }[] = $state([]);
 
   const uploader = createUploader("imageUploader", {
     onBeforeUploadBegin: async (uploadedFiles) => {
@@ -42,7 +46,7 @@
         return {
           key: file.key,
           name: file.name,
-          size: file.size,
+          size: fileBeforeUpload?.originalSize ?? file.size,
           url: file.ufsUrl,
           width: fileBeforeUpload?.width ?? 0,
           height: fileBeforeUpload?.height ?? 0,
@@ -172,7 +176,11 @@
             </div>
           </button>
           <p class="w-64 truncate font-bold text-sm px-2">{image.name}</p>
-          <p class="text-50 text-xs px-2">{image.size / 1000} KB</p>
+          <p class="text-50 text-xs px-2">
+            {image.size > 1048576
+              ? (image.size / 1048576).toFixed(2) + " MB"
+              : (image.size / 1024).toFixed(0) + " KB"}
+          </p>
         </div>
       {/each}
     </section>
