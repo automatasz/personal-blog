@@ -42,7 +42,7 @@ let links: NavBarLink[] = navBarConfig.links.map((item: NavBarLink | LinkPreset)
               aria-label={l.name}
               class:list={[
                 "btn-plain scale-animation rounded-lg h-11 font-bold px-5 active:scale-95",
-                l.requiresAuth && "authenticated-link",
+                l.requiresAuth && "authenticated-link !hidden",
               ]}
               href={l.external ? l.url : url(l.url)}
               target={l.external ? "_blank" : null}
@@ -139,24 +139,24 @@ let links: NavBarLink[] = navBarConfig.links.map((item: NavBarLink | LinkPreset)
     }
   }
 
-  async function hideAuthenticatedLinks() {
+  async function showAuthenticatedLinks() {
     const buttons = document.querySelectorAll(".authenticated-link");
     if (buttons.length === 0) {
       return;
     }
 
     const session = await authClientVanilla.getSession();
-    if (session.data?.user.id) {
+    if (!session.data?.user.id) {
       return;
     }
 
     buttons.forEach((button) => {
-      button.classList.add("!hidden");
+      button.classList.remove("!hidden");
     });
   }
 
   loadButtonScript();
-  hideAuthenticatedLinks();
+  showAuthenticatedLinks();
 </script>
 
 <script define:vars={{ scriptUrl: url("/pagefind/pagefind.js"), isProd: import.meta.env.PROD }} is:inline>
