@@ -98,7 +98,7 @@ const mainPanelTop = siteConfig.banner.enable
         }
 
         <SideBar
-          class="mb-4 row-start-2 row-end-3 col-span-2 lg:row-start-1 lg:row-end-2 lg:col-span-1 lg:max-w-[17.5rem] onload-animation"
+          class="mb-4 row-start-2 row-end-3 col-span-2 lg:row-start-1 lg:row-end-2 lg:col-span-1 lg:max-w-[17.5rem] transition-swup-fade onload-animation"
           headings={headings}
         />
 
@@ -139,7 +139,7 @@ const mainPanelTop = siteConfig.banner.enable
               class="fixed top-14 w-[var(--toc-width)] h-[calc(100vh_-_20rem)] overflow-y-scroll overflow-x-hidden hide-scrollbar"
               id="toc-inner-wrapper"
             >
-              <div class="w-full h-full transition-swup-fade " id="toc">
+              <div class="w-full h-full transition-swup-fade" id="toc">
                 <div class="h-8 w-full" />
                 <TOC headings={headings} />
                 <div class="h-8 w-full" />
