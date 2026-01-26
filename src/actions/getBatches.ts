@@ -4,7 +4,7 @@ import { db } from "@utils/db";
 
 export const getBatches = defineAction({
   accept: "json",
-  handler: async (input, context) => {
+  handler: async (_input, context) => {
     const userId = await checkIfAdminAndGetUserId(context.request.headers);
     return db
       .withSchema("keyworder")
