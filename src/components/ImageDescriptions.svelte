@@ -17,6 +17,13 @@
   let batch: { title: string | null } | undefined = $state(undefined);
   let lightbox: PhotoSwipeLightbox | null = $state(null);
 
+  // Edit state
+  let editingId: string | null = $state(null);
+  let editTitle: string = $state("");
+  let editDescription: string = $state("");
+  let editKeywords: string = $state("");
+  let isSaving: boolean = $state(false);
+
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -65,7 +72,6 @@
         data.descriptions.every((image) => image.result || image.description)
       ) {
         descriptions = data.descriptions;
-        // Init lightbox after descriptions render
         setTimeout(initLightbox, 0);
       } else {
         fetchEventsComplete(id);
@@ -152,6 +158,76 @@
   function getImageSrc(description: Description) {
     return `https://${appId}.ufs.sh/f/${description.file_id}`;
   }
+
+  // Edit functions
+  function startEditing(description: Description) {
+    editingId = description.id;
+    editTitle = description.title || "";
+    editDescription = description.description || "";
+    editKeywords = description.keywords?.join(", ") || "";
+  }
+
+  function cancelEditing() {
+    editingId = null;
+    editTitle = "";
+    editDescription = "";
+    editKeywords = "";
+  }
+
+  async function saveEditing(descriptionId: string) {
+    isSaving = true;
+
+    const keywords = editKeywords
+      .split(",")
+      .map((k) => k.trim())
+      .filter((k) => k.length > 0);
+
+    const { error } = await actions.updateDescription({
+      descriptionId,
+      title: editTitle,
+      description: editDescription,
+      keywords,
+    });
+
+    isSaving = false;
+
+    if (error) {
+      alert("Failed to save: " + error.message);
+      return;
+    }
+
+    // Update local state
+    if (descriptions) {
+      descriptions = descriptions.map((d) =>
+        d.id === descriptionId
+          ? {
+              ...d,
+              title: editTitle,
+              description: editDescription,
+              keywords,
+            }
+          : d
+      );
+    }
+
+    cancelEditing();
+  }
+
+  async function regenerate(descriptionId: string) {
+    if (!confirm("Regenerate description for this image?")) return;
+
+    const { error } = await actions.regenerateDescription({ descriptionId });
+
+    if (error) {
+      alert("Failed to regenerate: " + error.message);
+      return;
+    }
+
+    // Refresh data
+    if (batchId) {
+      fetchBatch(batchId);
+    }
+  }
 </script>
 
 <section class="text-75 divide-y-2 space-y-4 mt-2">
@@ -183,9 +259,9 @@
   {/if}
 
   {#if descriptions}
-    <div class="pswp-gallery grid lg:grid-cols-3 gap-4 pt-4" id="batch-gallery">
+    <div class="pswp-gallery pt-4" id="batch-gallery">
       {#each descriptions as description (description.id)}
-        <div class="grid lg:grid-cols-3 pt-4">
+        <div class="grid md:grid-cols-[300px_1fr] gap-4 pt-4">
           <div class="p-1">
             <a
               class="group relative h-auto w-full overflow-hidden rounded-lg cursor-zoom-in block"
@@ -199,43 +275,111 @@
             </a>
           </div>
           <div class="lg:col-span-2 p-1">
-            <h3 class="font-black text-xl">{description.title}</h3>
-            <p class="text-sm text-50">{description.file_name}</p>
-            {#if description.result !== "success"}
-              <p class="text-sm text-red-600">
-                The image description failed. Please try again and make sure the
-                image does not contain content that breaks the Terms of Service.
-              </p>
-            {/if}
-            <p class="my-2">{description.description}</p>
-            {#if description.keywords}
-              <div class="flex gap-2 flex-wrap items-center">
-                {#each description.keywords.slice(0, expandedKeywords[description.id] ? undefined : 10) as keyword, index (index)}
-                  <span class="btn-regular h-8 text-sm px-3 rounded-lg"
-                    >{keyword}</span
-                  >
-                {/each}
-                {#if description.keywords.length > 10}
+            {#if editingId === description.id}
+              <!-- Edit Mode -->
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-bold mb-1" for="edit-title">Title</label>
+                  <input
+                    id="edit-title"
+                    type="text"
+                    class="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-75"
+                    bind:value={editTitle}
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-bold mb-1" for="edit-desc">Description</label>
+                  <textarea
+                    id="edit-desc"
+                    class="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-75 h-24"
+                    bind:value={editDescription}
+                  ></textarea>
+                </div>
+                <div>
+                  <label class="block text-sm font-bold mb-1" for="edit-keywords">Keywords (comma-separated)</label>
+                  <input
+                    id="edit-keywords"
+                    type="text"
+                    class="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-75"
+                    bind:value={editKeywords}
+                  />
+                </div>
+                <div class="flex gap-2">
                   <button
-                    class="btn-regular active:scale-90 h-8 text-sm px-3 rounded-lg flex items-center gap-1 hover:bg-100 transition-colors"
-                    onclick={() => expandedKeywords[description.id] = !expandedKeywords[description.id]}
+                    class="btn-regular active:scale-90 text-base px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-100 transition-colors disabled:opacity-50"
+                    onclick={() => saveEditing(description.id)}
+                    disabled={isSaving}
                   >
-                    <Icon icon={expandedKeywords[description.id] ? "lucide:chevron-up" : "lucide:chevron-down"} class="text-sm" />
-                    {expandedKeywords[description.id] ? "Show less" : "Show more (" + (description.keywords.length - 10) + ")"}
+                    <Icon icon="lucide:save" class="text-base" />
+                    {isSaving ? "Saving..." : "Save"}
                   </button>
-                {/if}
+                  <button
+                    class="btn-regular active:scale-90 text-base px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-100 transition-colors"
+                    onclick={cancelEditing}
+                  >
+                    <Icon icon="lucide:x" class="text-base" />
+                    Cancel
+                  </button>
+                </div>
               </div>
-              <button
-                class="mt-4 btn-regular active:scale-90 text-base px-4 py-3 rounded-lg flex items-center gap-1 hover:bg-100 transition-colors"
-                onclick={() =>
-                  navigator.clipboard.writeText(
-                    description.keywords?.join(", ") || "",
-                  )}
-                title="Copy keywords to clipboard"
-              >
-                <Icon icon="lucide:copy" class="text-base" />
-                Copy
-              </button>
+            {:else}
+              <!-- View Mode -->
+              <div class="flex items-start justify-between">
+                <h3 class="font-black text-xl">{description.title}</h3>
+                <div class="flex gap-1">
+                  <button
+                    class="btn-regular active:scale-90 p-2 rounded-lg hover:bg-100 transition-colors"
+                    onclick={() => startEditing(description)}
+                    title="Edit"
+                  >
+                    <Icon icon="lucide:pencil" class="text-sm" />
+                  </button>
+                  <button
+                    class="btn-regular active:scale-90 p-2 rounded-lg hover:bg-100 transition-colors"
+                    onclick={() => regenerate(description.id)}
+                    title="Regenerate"
+                  >
+                    <Icon icon="lucide:refresh-cw" class="text-sm" />
+                  </button>
+                </div>
+              </div>
+              <p class="text-sm text-50">{description.file_name}</p>
+              {#if description.result !== "success"}
+                <p class="text-sm text-red-600">
+                  The image description failed. Please try again and make sure the
+                  image does not contain content that breaks the Terms of Service.
+                </p>
+              {/if}
+              <p class="my-2">{description.description}</p>
+              {#if description.keywords}
+                <div class="flex gap-2 flex-wrap items-center">
+                  {#each description.keywords.slice(0, expandedKeywords[description.id] ? undefined : 10) as keyword, index (index)}
+                    <span class="btn-regular h-8 text-sm px-3 rounded-lg"
+                      >{keyword}</span
+                    >
+                  {/each}
+                  {#if description.keywords.length > 10}
+                    <button
+                      class="btn-regular active:scale-90 h-8 text-sm px-3 rounded-lg flex items-center gap-1 hover:bg-100 transition-colors"
+                      onclick={() => expandedKeywords[description.id] = !expandedKeywords[description.id]}
+                    >
+                      <Icon icon={expandedKeywords[description.id] ? "lucide:chevron-up" : "lucide:chevron-down"} class="text-sm" />
+                      {expandedKeywords[description.id] ? "Show less" : "Show more (" + (description.keywords.length - 10) + ")"}
+                    </button>
+                  {/if}
+                </div>
+                <button
+                  class="mt-4 btn-regular active:scale-90 text-base px-4 py-3 rounded-lg flex items-center gap-1 hover:bg-100 transition-colors"
+                  onclick={() =>
+                    navigator.clipboard.writeText(
+                      description.keywords?.join(", ") || "",
+                    )}
+                  title="Copy keywords to clipboard"
+                >
+                  <Icon icon="lucide:copy" class="text-base" />
+                  Copy
+                </button>
+              {/if}
             {/if}
           </div>
         </div>
