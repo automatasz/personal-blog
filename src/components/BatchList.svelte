@@ -67,6 +67,7 @@
         {#each batches as description (description.id)}
           <a
             href={`/batch?id=${description.id}`}
+            title={description.created_at.toLocaleString()}
             class="group cursor-pointer p-4 flex flex-row gap-4 justify-between items-center hover:bg-[var(--btn-plain-bg-hover)] transition ease-in-out duration-300 rounded-lg space-y-1"
           >
             <div>
