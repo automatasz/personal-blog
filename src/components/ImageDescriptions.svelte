@@ -76,11 +76,67 @@
       clearTimeout(timeoutId);
     }
   });
+
+  function downloadAsAdobeStockCSV() {
+    if (!descriptions) return;
+
+    const rows = [["Filename", "Title", "Keywords", "Category", "Releases"]];
+
+    descriptions.forEach((desc) => {
+      const keywords = desc.keywords?.join(", ") || "";
+      rows.push([
+        desc.file_name || "",
+        desc.title || "",
+        keywords,
+        "3", // default category
+        "", // no releases
+      ]);
+    });
+
+    // Convert to CSV with proper escaping
+    const csv = rows
+      .map((row) =>
+        row
+          .map((cell) => {
+            const str = String(cell);
+            // Escape quotes and wrap in quotes if contains comma, quote, or newline
+            if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+              return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+          })
+          .join(","),
+      )
+      .join("\n");
+
+    // Create blob and download
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `keyworder-batch-${batchId}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 </script>
 
 <section class="text-75 divide-y-2 space-y-4 mt-2">
   {#if batch}
-    <h1 class="text-90 text-4xl font-black">{batch.title}</h1>
+    <div class="flex items-center justify-between">
+      <h1 class="text-90 text-4xl font-black">{batch.title}</h1>
+      {#if descriptions && descriptions.length > 0}
+        <button
+          class="btn-regular active:scale-90 text-base px-4 py-3 rounded-lg flex items-center gap-2 hover:bg-100 transition-colors"
+          onclick={downloadAsAdobeStockCSV}
+          title="Download as Adobe Stock CSV"
+        >
+          <Icon icon="lucide:download" class="text-base" />
+          Adobe Stock CSV
+        </button>
+      {/if}
+    </div>
   {/if}
   {#if errorMessage}
     <p class="text-red-600">
