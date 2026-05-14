@@ -1,6 +1,6 @@
 import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
-import { checkIfAdminAndGetUserId } from "@utils/actions";
+import { checkIfSignedInAndGetUserId } from "@utils/actions";
 import { db } from "@utils/db";
 
 export const getBatch = defineAction({
@@ -9,7 +9,7 @@ export const getBatch = defineAction({
     batchId: z.string().uuid(),
   }),
   handler: async (input, context) => {
-    const userId = await checkIfAdminAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
     const descriptions = await db
       .withSchema("keyworder")
       .selectFrom("description")

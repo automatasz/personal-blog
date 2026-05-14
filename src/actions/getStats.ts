@@ -32,12 +32,18 @@ export const getStats = defineAction({
       .where("user_id", "=", userId)
       .executeTakeFirstOrThrow();
 
-    console.log(tokenSum);
+    const user = await db
+      .withSchema("keyworder")
+      .selectFrom("user")
+      .select("credits")
+      .where("id", "=", userId)
+      .executeTakeFirstOrThrow();
 
     return {
       batchCount: Number(batchCount),
       imageCount: Number(imageCount),
       tokenSum: Number(tokenSum),
+      creditsRemaining: Number(user.credits),
     };
   },
 });

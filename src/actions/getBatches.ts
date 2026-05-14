@@ -1,11 +1,11 @@
 import { defineAction } from "astro:actions";
-import { checkIfAdminAndGetUserId } from "@utils/actions";
+import { checkIfSignedInAndGetUserId } from "@utils/actions";
 import { db } from "@utils/db";
 
 export const getBatches = defineAction({
   accept: "json",
   handler: async (_input, context) => {
-    const userId = await checkIfAdminAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
     return db
       .withSchema("keyworder")
       .selectFrom("description")

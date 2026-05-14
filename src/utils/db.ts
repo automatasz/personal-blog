@@ -67,6 +67,7 @@ export interface AuthUserTable {
   createdAt: Date;
   updatedAt: Date;
   role: string;
+  credits: number;
 }
 
 export type User = Selectable<AuthUserTable>;

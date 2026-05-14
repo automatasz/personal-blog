@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { fade } from "svelte/transition";
+  import { onMount } from "svelte";
   import { actions } from "astro:actions";
   import { navigate } from "astro:transitions/client";
   import {
@@ -11,6 +12,7 @@
   import { twMerge } from "tailwind-merge";
   import ImageWithLoading from "./ImageWithLoading.svelte";
   import { UPLOADTHING_APP_ID } from "astro:env/client";
+  import { CREDIT_COST_UPLOAD, CREDIT_COST_DESCRIBE } from "@/constants/credit-costs";
 
   type FileForUpload = {
     key: string;
@@ -24,6 +26,23 @@
   let isSubmitting: boolean = $state(false);
   let errorMessage: string | undefined = $state(undefined);
   let files: FileForUpload[] = $state([]);
+  let creditsRemaining: number | undefined = $state(undefined);
+
+  onMount(() => {
+    actions.getStats(null).then(({ data }) => {
+      if (data) {
+        creditsRemaining = data.creditsRemaining;
+      }
+    });
+  });
+
+  function refreshCredits() {
+    actions.getStats(null).then(({ data }) => {
+      if (data) {
+        creditsRemaining = data.creditsRemaining;
+      }
+    });
+  }
   let filesBeforeUpload: {
     width: number;
     height: number;
@@ -52,10 +71,11 @@
           height: fileBeforeUpload?.height ?? 0,
         };
       });
+      refreshCredits();
     },
     onUploadError: (error) => {
       if (error.code === "INTERNAL_CLIENT_ERROR") {
-        alert("Error: You have run out of tokens.");
+        alert("Upload failed. You may have insufficient credits or have reached your upload limit.");
       }
     },
   });
@@ -109,36 +129,54 @@
     {/if}
   {:else}
     {#if files.length > 0}
-      <form onsubmit={submit} id="post-files" class="flex flex-row gap-4">
-        <button
-          class="btn-regular rounded-lg active:scale-90 py-3 px-6 cursor-pointer"
-          type="submit"
-        >
-          Describe <Icon
-            class="text-[1.50rem]"
-            icon="material-symbols:upload"
-          />
-        </button>
-        <button
-          class="btn-regular rounded-lg active:scale-90 py-3 px-6 cursor-pointer"
-          type="button"
-          onclick={removeAllImages}
-        >
-          Delete & start over <Icon class="text-[1.50rem]" icon="mdi:garbage" />
-        </button>
-      </form>
-    {:else}
-      <div class="w-fit">
-        <UploadButton
-          {uploader}
-          config={{ cn: twMerge }}
-          appearance={{
-            button:
-              "min-w-48 !btn-regular ut-ready:bg-[var(--btn-regular-bg)] ut-ready:hover:bg-[var(--btn-regular-bg-hover)] ut-ready:active:bg-[var(--btn-regular-bg-active)] rounded-lg active:scale-90 py-3 px-4 cursor-pointer grow hide-input-for-uploadthing focus-within:!ring-0 data-[state=uploading]:after:bg-[var(--btn-regular-bg-hover)]",
-            container: "text-75",
-          }}
-        ></UploadButton>
+      <div class="flex items-center gap-4">
+        <form onsubmit={submit} id="post-files" class="flex flex-row gap-4">
+          <button
+            class="btn-regular rounded-lg active:scale-90 py-3 px-6 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            type="submit"
+            disabled={creditsRemaining !== undefined && files.length * CREDIT_COST_DESCRIBE > creditsRemaining}
+          >
+            Describe <Icon
+              class="text-[1.50rem]"
+              icon="material-symbols:upload"
+            />
+          </button>
+          <button
+            class="btn-regular rounded-lg active:scale-90 py-3 px-6 cursor-pointer"
+            type="button"
+            onclick={removeAllImages}
+          >
+            Delete & start over <Icon class="text-[1.50rem]" icon="mdi:garbage" />
+          </button>
+        </form>
       </div>
+      {#if creditsRemaining !== undefined && files.length * CREDIT_COST_DESCRIBE > creditsRemaining}
+        <p class="text-red-600 text-sm">
+          Describing {files.length} images costs {files.length * CREDIT_COST_DESCRIBE} credits, but you only have {creditsRemaining}.
+          Remove {Math.ceil((files.length * CREDIT_COST_DESCRIBE - creditsRemaining) / CREDIT_COST_DESCRIBE)} images to continue.
+        </p>
+      {/if}
+    {:else}
+      {#if creditsRemaining !== undefined && creditsRemaining <= 0}
+        <p class="text-75">You don't have enough credits to upload more images.</p>
+      {:else}
+        <div class="w-fit">
+          <UploadButton
+            {uploader}
+            config={{ cn: twMerge }}
+            appearance={{
+              button:
+                "min-w-48 !btn-regular ut-ready:bg-[var(--btn-regular-bg)] ut-ready:hover:bg-[var(--btn-regular-bg-hover)] ut-ready:active:bg-[var(--btn-regular-bg-active)] rounded-lg active:scale-90 py-3 px-4 cursor-pointer grow hide-input-for-uploadthing focus-within:!ring-0 data-[state=uploading]:after:bg-[var(--btn-regular-bg-hover)]",
+              container: "text-75",
+            }}
+          ></UploadButton>
+        </div>
+      {/if}
+    {/if}
+
+    <p class="text-50 text-sm">{CREDIT_COST_UPLOAD} credit per upload + {CREDIT_COST_DESCRIBE} credits per description</p>
+    {#if creditsRemaining !== undefined}
+      <p class="text-75 text-sm font-bold">Credits remaining: {creditsRemaining}</p>
     {/if}
 
     {#if files.length > 0}

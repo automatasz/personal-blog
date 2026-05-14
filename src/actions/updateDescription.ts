@@ -1,7 +1,8 @@
 import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { db } from "@utils/db";
-import { checkIfAdminAndGetUserId } from "@utils/actions";
+import { checkIfSignedInAndGetUserId, deductUserCredits } from "@utils/actions";
+import { CREDIT_COST_REGENERATE } from "@/constants/credit-costs";
 import { zodTextFormat } from "openai/helpers/zod";
 import { openai } from "@utils/ai";
 
@@ -13,7 +14,7 @@ export const updateDescription = defineAction({
     keywords: z.array(z.string()).optional(),
   }),
   handler: async (input, context) => {
-    const userId = await checkIfAdminAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
 
     const updateData: {
       title?: string | null;
@@ -40,7 +41,7 @@ export const regenerateDescription = defineAction({
     descriptionId: z.string().uuid(),
   }),
   handler: async (input, context) => {
-    const userId = await checkIfAdminAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
 
     const record = await db.withSchema("keyworder").selectFrom("description")
       .selectAll()
@@ -51,6 +52,9 @@ export const regenerateDescription = defineAction({
     if (!record) {
       return { error: "Description not found" };
     }
+
+    // Deduct 1 credit for regeneration before calling OpenAI
+    await deductUserCredits(userId, CREDIT_COST_REGENERATE);
 
     const parseResponse = openai.responses.parse.bind(openai.responses);
 
