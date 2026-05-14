@@ -19,10 +19,6 @@ export const postFileIds = defineAction({
     const userId = await checkIfSignedInAndGetUserId(context.request.headers);
     const batchId = crypto.randomUUID();
 
-    // Deduct describe credits before inserting rows or dispatching events
-    await deductUserCredits(userId, input.files.length * CREDIT_COST_DESCRIBE);
-    await createCreditAudit(userId, -(input.files.length * CREDIT_COST_DESCRIBE), "describe", { batchId, imageCount: input.files.length });
-
     const record = await db.withSchema("keyworder").insertInto("description")
       .values(input.files.map(file => ({
         file_id: file.id,
@@ -44,10 +40,17 @@ export const postFileIds = defineAction({
       await Promise.all(events);
     }
     catch (e) {
-      // display error in the console for inspection
+      // Dispatch failed — clean up orphaned rows so user can retry
+      await db.withSchema("keyworder").deleteFrom("description")
+        .where("batch_id", "=", batchId)
+        .execute();
       console.error("batch id", batchId, "user id", userId, e);
       throw new Error("Failed to start creating descriptions");
     }
+
+    // Deduct credits only after rows are inserted and events dispatched
+    await deductUserCredits(userId, input.files.length * CREDIT_COST_DESCRIBE);
+    await createCreditAudit(userId, -(input.files.length * CREDIT_COST_DESCRIBE), "describe", { batchId, imageCount: input.files.length });
 
     return batchId;
   },

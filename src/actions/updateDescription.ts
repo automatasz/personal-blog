@@ -54,10 +54,6 @@ export const regenerateDescription = defineAction({
       return { error: "Description not found" };
     }
 
-    // Deduct 1 credit for regeneration before calling OpenAI
-    await deductUserCredits(userId, CREDIT_COST_REGENERATE);
-    await createCreditAudit(userId, -CREDIT_COST_REGENERATE, "regenerate", { descriptionId: input.descriptionId });
-
     const parseResponse = openai.responses.parse.bind(openai.responses);
 
     const response = await parseResponse({
@@ -91,6 +87,10 @@ export const regenerateDescription = defineAction({
     });
 
     if (response.output_parsed) {
+      // Deduct credits only after OpenAI succeeds
+      await deductUserCredits(userId, CREDIT_COST_REGENERATE);
+      await createCreditAudit(userId, -CREDIT_COST_REGENERATE, "regenerate", { descriptionId: input.descriptionId });
+
       await db.withSchema("keyworder").updateTable("description")
         .set({
           title: response.output_parsed.title,
