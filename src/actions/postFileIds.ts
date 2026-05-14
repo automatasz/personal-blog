@@ -5,6 +5,7 @@ import { checkIfSignedInAndGetUserId, deductUserCredits } from "@utils/actions";
 import { CREDIT_COST_DESCRIBE } from "@/constants/credit-costs";
 import { createCreditAudit } from "@utils/audit";
 import { db } from "@utils/db";
+import { uploadthing } from "@utils/storage";
 
 export const postFileIds = defineAction({
   input: z.object({
@@ -40,10 +41,11 @@ export const postFileIds = defineAction({
       await Promise.all(events);
     }
     catch (e) {
-      // Dispatch failed — clean up orphaned rows so user can retry
+      // Dispatch failed — clean up orphaned rows and UploadThing files
       await db.withSchema("keyworder").deleteFrom("description")
         .where("batch_id", "=", batchId)
         .execute();
+      await uploadthing.deleteFiles(input.files.map(f => f.id));
       console.error("batch id", batchId, "user id", userId, e);
       throw new Error("Failed to start creating descriptions");
     }
