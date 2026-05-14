@@ -17,6 +17,7 @@ export interface Database {
   account: Tables["keyworder.account"];
   verification: Tables["keyworder.verification"];
   batch: Tables["keyworder.batch"];
+  credit_audit: Tables["keyworder.credit_audit"];
 }
 
 interface Tables {
@@ -26,6 +27,7 @@ interface Tables {
   "keyworder.account": AccountTable;
   "keyworder.verification": VerificationTable;
   "keyworder.batch": BatchTable;
+  "keyworder.credit_audit": CreditAuditTable;
 }
 
 export interface BatchTable {
@@ -113,6 +115,18 @@ export interface VerificationTable {
 }
 
 export type Verification = Selectable<VerificationTable>;
+
+export interface CreditAuditTable {
+  id: Generated<string>;
+  user_id: string;
+  amount: number;
+  action: string;
+  metadata: Record<string, unknown> | null;
+  created_at: ColumnType<Date, never, never>;
+}
+
+export type CreditAudit = Selectable<CreditAuditTable>;
+export type NewCreditAudit = Insertable<CreditAuditTable>;
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
