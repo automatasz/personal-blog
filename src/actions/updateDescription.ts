@@ -54,6 +54,8 @@ export const regenerateDescription = defineAction({
       return { error: "Description not found" };
     }
 
+    // TODO: dispatch to Inngest instead of calling OpenAI synchronously.
+    // Serverless function timeout (10s hobby / 60s pro) may cut off slow responses.
     const parseResponse = openai.responses.parse.bind(openai.responses);
 
     const response = await parseResponse({
