@@ -1,4 +1,4 @@
-import { defineAction } from "astro:actions";
+import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { db } from "@utils/db";
 import { checkIfSignedInAndGetUserId, deductCredits } from "@utils/actions";
@@ -27,11 +27,18 @@ export const updateDescription = defineAction({
     if (input.description !== undefined) updateData.description = input.description;
     if (input.keywords !== undefined) updateData.keywords = input.keywords;
 
-    await db.withSchema("keyworder").updateTable("description")
+    const result = await db.withSchema("keyworder").updateTable("description")
       .set(updateData)
       .where("id", "=", input.descriptionId)
       .where("user_id", "=", userId)
       .executeTakeFirst();
+
+    if (Number(result.numUpdatedRows) === 0) {
+      throw new ActionError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to edit this description",
+      });
+    }
 
     return { success: true };
   },
