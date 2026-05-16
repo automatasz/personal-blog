@@ -40,7 +40,7 @@ export async function deductCredits(
     await trx
       .withSchema("keyworder")
       .updateTable("user")
-      .set((eb) => ({
+      .set(eb => ({
         credits: eb("credits", "-", amount),
       }))
       .where("id", "=", userId)

@@ -19,7 +19,10 @@ export const postFileIds = defineAction({
     const batchId = crypto.randomUUID();
 
     // Deduct describe credits before inserting rows or dispatching events
-    await deductCredits(userId, input.files.length * CREDIT_COST_DESCRIBE, "describe", { batchId, imageCount: input.files.length });
+    await deductCredits(userId, input.files.length * CREDIT_COST_DESCRIBE, "describe", {
+      batchId,
+      imageCount: input.files.length,
+    });
 
     const record = await db.withSchema("keyworder").insertInto("description")
       .values(input.files.map(file => ({

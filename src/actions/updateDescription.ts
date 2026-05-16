@@ -97,7 +97,10 @@ export const regenerateDescription = defineAction({
     });
 
     if (!response.output_parsed) {
-      return { success: false, error: "AI failed to generate a response. Please try again." };
+      return {
+        success: false,
+        error: "AI failed to generate a response. Please try again.",
+      };
     }
 
     await deductCredits(userId, CREDIT_COST_REGENERATE, "regenerate", { descriptionId: input.descriptionId });
