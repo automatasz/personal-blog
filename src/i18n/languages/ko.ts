@@ -7,7 +7,10 @@ export const ko: Translation = {
   [Key.archive]: "아카이브",
   [Key.search]: "검색",
   [Key.gallery]: "갤러리",
-  
+
+  [Key.keyworder]: "Keyworder",
+  [Key.batch]: "Keywording results",
+
   [Key.tags]: "태그",
   [Key.categories]: "카테고리",
   [Key.recentPosts]: "최근 게시물",
