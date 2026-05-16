@@ -1,8 +1,7 @@
 import { UPLOADTHING_TOKEN } from "astro:env/server";
 import { UTApi, createUploadthing, type FileRouter } from "uploadthing/server";
-import { checkIfSignedInAndGetUserId, deductUserCredits } from "./actions";
+import { checkIfSignedInAndGetUserId, deductCredits } from "./actions";
 import { CREDIT_COST_UPLOAD } from "@/constants/credit-costs";
-import { createCreditAudit } from "./audit";
 
 export const uploadthing = new UTApi({
   token: UPLOADTHING_TOKEN,
@@ -33,8 +32,7 @@ export const ourFileRouter: FileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload
-      await deductUserCredits(metadata.userId, CREDIT_COST_UPLOAD);
-      await createCreditAudit(metadata.userId, -CREDIT_COST_UPLOAD, "upload", { fileKey: file.key });
+      await deductCredits(metadata.userId, CREDIT_COST_UPLOAD, "upload", { fileKey: file.key });
       console.log("Upload complete for userId:", metadata.userId, "1 credit deducted");
 
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback

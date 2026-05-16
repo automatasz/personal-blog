@@ -1,9 +1,8 @@
 import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { db } from "@utils/db";
-import { checkIfSignedInAndGetUserId, deductUserCredits } from "@utils/actions";
+import { checkIfSignedInAndGetUserId, deductCredits } from "@utils/actions";
 import { CREDIT_COST_REGENERATE } from "@/constants/credit-costs";
-import { createCreditAudit } from "@utils/audit";
 import { zodTextFormat } from "openai/helpers/zod";
 import { openai } from "@utils/ai";
 
@@ -55,8 +54,7 @@ export const regenerateDescription = defineAction({
     }
 
     // Deduct 1 credit for regeneration before calling OpenAI
-    await deductUserCredits(userId, CREDIT_COST_REGENERATE);
-    await createCreditAudit(userId, -CREDIT_COST_REGENERATE, "regenerate", { descriptionId: input.descriptionId });
+    await deductCredits(userId, CREDIT_COST_REGENERATE, "regenerate", { descriptionId: input.descriptionId });
 
     const parseResponse = openai.responses.parse.bind(openai.responses);
 

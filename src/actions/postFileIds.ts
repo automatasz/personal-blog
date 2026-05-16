@@ -1,9 +1,8 @@
 import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { inngest } from "@/inngest";
-import { checkIfSignedInAndGetUserId, deductUserCredits } from "@utils/actions";
+import { checkIfSignedInAndGetUserId, deductCredits } from "@utils/actions";
 import { CREDIT_COST_DESCRIBE } from "@/constants/credit-costs";
-import { createCreditAudit } from "@utils/audit";
 import { db } from "@utils/db";
 
 export const postFileIds = defineAction({
@@ -20,8 +19,7 @@ export const postFileIds = defineAction({
     const batchId = crypto.randomUUID();
 
     // Deduct describe credits before inserting rows or dispatching events
-    await deductUserCredits(userId, input.files.length * CREDIT_COST_DESCRIBE);
-    await createCreditAudit(userId, -(input.files.length * CREDIT_COST_DESCRIBE), "describe", { batchId, imageCount: input.files.length });
+    await deductCredits(userId, input.files.length * CREDIT_COST_DESCRIBE, "describe", { batchId, imageCount: input.files.length });
 
     const record = await db.withSchema("keyworder").insertInto("description")
       .values(input.files.map(file => ({
