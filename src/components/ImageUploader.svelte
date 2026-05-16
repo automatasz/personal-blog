@@ -58,10 +58,8 @@
       return minifiedFiles.map((file) => file.file);
     },
     onClientUploadComplete: (res) => {
-      files = res.map((file) => {
-        const fileBeforeUpload = filesBeforeUpload.find(
-          (f) => f.file.name === file.name,
-        );
+      files = res.map((file, index) => {
+        const fileBeforeUpload = filesBeforeUpload[index];
         return {
           key: file.key,
           name: file.name,
