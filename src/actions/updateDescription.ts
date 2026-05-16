@@ -96,19 +96,21 @@ export const regenerateDescription = defineAction({
       },
     });
 
-    if (response.output_parsed) {
-      await deductCredits(userId, CREDIT_COST_REGENERATE, "regenerate", { descriptionId: input.descriptionId });
-      await db.withSchema("keyworder").updateTable("description")
-        .set({
-          title: response.output_parsed.title,
-          description: response.output_parsed.description,
-          keywords: response.output_parsed.keywords,
-          tokens_used: response.usage?.total_tokens,
-          result: "success",
-        })
-        .where("id", "=", input.descriptionId)
-        .executeTakeFirst();
+    if (!response.output_parsed) {
+      return { success: false, error: "AI failed to generate a response. Please try again." };
     }
+
+    await deductCredits(userId, CREDIT_COST_REGENERATE, "regenerate", { descriptionId: input.descriptionId });
+    await db.withSchema("keyworder").updateTable("description")
+      .set({
+        title: response.output_parsed.title,
+        description: response.output_parsed.description,
+        keywords: response.output_parsed.keywords,
+        tokens_used: response.usage?.total_tokens,
+        result: "success",
+      })
+      .where("id", "=", input.descriptionId)
+      .executeTakeFirst();
 
     return { success: true };
   },
