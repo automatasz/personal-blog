@@ -3,6 +3,7 @@ import { z } from "astro:schema";
 import { db } from "@utils/db";
 import { checkIfSignedInAndGetUserId, deductCredits } from "@utils/actions";
 import { CREDIT_COST_REGENERATE } from "@/constants/credit-costs";
+import { AI_MODEL } from "@/constants/ai";
 import { UPLOADTHING_APP_ID } from "astro:env/client";
 import { zodTextFormat } from "openai/helpers/zod";
 import { openai } from "@utils/ai";
@@ -66,7 +67,7 @@ export const regenerateDescription = defineAction({
     const parseResponse = openai.responses.parse.bind(openai.responses);
 
     const response = await parseResponse({
-      model: "gpt-4.1-nano",
+      model: AI_MODEL,
       input: [
         {
           role: "user",

@@ -3,6 +3,7 @@ import { zodTextFormat } from "openai/helpers/zod";
 import { batchSchema, descriptionSchema } from "@/inngest/types";
 import { db, type DescriptionUpdate } from "@utils/db";
 import { openai } from "@utils/ai";
+import { AI_MODEL } from "@/constants/ai";
 import { UPLOADTHING_APP_ID } from "astro:env/client";
 import { getBatchSuccessCount, getBatchTitles } from "@utils/utils.db";
 
@@ -19,7 +20,7 @@ export default inngest.createFunction(
       "openai.wrap.image.describe",
       parseResponse,
       {
-        model: "gpt-4.1-nano",
+        model: AI_MODEL,
         input: [
           {
             role: "user",
@@ -87,7 +88,7 @@ export default inngest.createFunction(
         "openai.wrap.batch.title",
         parseResponse,
         {
-          model: "gpt-4.1-nano",
+          model: AI_MODEL,
           input: [
             {
               role: "user",
