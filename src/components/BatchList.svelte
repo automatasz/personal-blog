@@ -72,7 +72,7 @@
           >
             <div>
               <div class="text-lg text-75 font-extrabold">
-                {description.title}
+                {description.title ?? "Untitled batch"}
               </div>
               <div class="text-base text-50 font-extrabold">
                 {description.number_of_images}

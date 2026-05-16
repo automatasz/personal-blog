@@ -17,7 +17,6 @@ export const getBatches = defineAction({
         db.fn.count("description.id").as("number_of_images"),
       ])
       .where("description.user_id", "=", userId)
-      .where("batch.title", "is not", null)
       .groupBy(["description.batch_id", "batch.title", "batch.created_at"])
       .orderBy("created_at", "desc")
       .execute();
