@@ -3,6 +3,7 @@ import { z } from "astro:schema";
 import { db } from "@utils/db";
 import { checkIfSignedInAndGetUserId, deductCredits } from "@utils/actions";
 import { CREDIT_COST_REGENERATE } from "@/constants/credit-costs";
+import { UPLOADTHING_APP_ID } from "astro:env/client";
 import { zodTextFormat } from "openai/helpers/zod";
 import { openai } from "@utils/ai";
 
@@ -70,7 +71,7 @@ export const regenerateDescription = defineAction({
             },
             {
               type: "input_image",
-              image_url: record.file_id,
+              image_url: `https://${UPLOADTHING_APP_ID}.ufs.sh/f/${record.file_id}`,
               detail: "low",
             },
           ],
