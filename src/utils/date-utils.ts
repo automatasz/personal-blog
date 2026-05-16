@@ -21,68 +21,68 @@ export function daysAgoWord(days: number): string {
     return "yesterday";
   }
 
-  if (days > 7) {
-    return "a week ago";
+  if (days >= 360) {
+    return "over a year ago";
   }
 
-  if (days > 14) {
-    return "two weeks ago";
-  }
-
-  if (days > 21) {
-    return "three weeks ago";
-  }
-
-  if (days > 28) {
-    return "four weeks ago";
-  }
-
-  if (days > 30) {
-    return "a month ago";
-  }
-
-  if (days > 60) {
-    return "two months ago";
-  }
-
-  if (days > 90) {
-    return "three months ago";
-  }
-
-  if (days > 120) {
-    return "four months ago";
-  }
-
-  if (days > 150) {
-    return "five months ago";
-  }
-
-  if (days > 180) {
-    return "six months ago";
-  }
-
-  if (days > 210) {
-    return "seven months ago";
-  }
-
-  if (days > 240) {
-    return "eight months ago";
-  }
-
-  if (days > 270) {
-    return "nine months ago";
-  }
-
-  if (days > 300) {
-    return "ten months ago";
-  }
-
-  if (days > 330) {
+  if (days >= 330) {
     return "eleven months ago";
   }
 
-  if (days > 360) {
-    return "over a year ago";
+  if (days >= 300) {
+    return "ten months ago";
+  }
+
+  if (days >= 270) {
+    return "nine months ago";
+  }
+
+  if (days >= 240) {
+    return "eight months ago";
+  }
+
+  if (days >= 210) {
+    return "seven months ago";
+  }
+
+  if (days >= 180) {
+    return "six months ago";
+  }
+
+  if (days >= 150) {
+    return "five months ago";
+  }
+
+  if (days >= 120) {
+    return "four months ago";
+  }
+
+  if (days >= 90) {
+    return "three months ago";
+  }
+
+  if (days >= 60) {
+    return "two months ago";
+  }
+
+  if (days >= 30) {
+    return "a month ago";
+  }
+
+  if (days >= 28) {
+    return "four weeks ago";
+  }
+
+  if (days >= 21) {
+    return "three weeks ago";
+  }
+
+  if (days >= 14) {
+    return "two weeks ago";
+  }
+
+  if (days >= 7) {
+    return "a week ago";
   }
 
   return `${days} days ago`;
