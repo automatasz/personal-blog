@@ -41,5 +41,5 @@ export const auth = betterAuth({
       clientSecret: GOOGLE_AUTH_CLIENT_SECRET,
     },
   },
-  trustedOrigins: ["http://localhost:4321"].concat(VERCEL_BRANCH_URL ? [`https://${VERCEL_BRANCH_URL}`] : []),
+  trustedOrigins: ["http://localhost:4321", "http://lievono:4321"].concat(VERCEL_BRANCH_URL ? [`https://${VERCEL_BRANCH_URL}`] : []),
 });
