@@ -3,8 +3,8 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev --host",
-    "dev:all": "astro dev --host & npx inngest-cli@latest dev -u http://localhost:4321/api/inngest & wait",
+    "dev": "INNGEST_DEV=1 astro dev --host",
+    "dev:all": "INNGEST_DEV=1 astro dev --host & INNGEST_DEV=1 npx inngest-cli@latest dev -u http://localhost:4321/api/inngest & wait",
     "start": "astro dev",
     "build": "astro build && pagefind --site .vercel/output/static",
     "preview": "astro preview",
