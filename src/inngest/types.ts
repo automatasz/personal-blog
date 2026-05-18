@@ -1,13 +1,4 @@
-import { EventSchemas } from "inngest";
 import z from "zod";
-
-interface ImageDescribeEvent {
-  name: "keyworder/image.describe";
-  data: {
-    fileId: string;
-    descriptionId: string;
-  };
-}
 
 export const descriptionSchema = z.object({
   title: z.string(),
@@ -19,4 +10,4 @@ export const batchSchema = z.object({
   title: z.string(),
 });
 
-export const schemas = new EventSchemas().fromUnion<ImageDescribeEvent>();
+

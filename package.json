@@ -37,7 +37,7 @@
     "astro-icon": "^1.1.4",
     "better-auth": "^1.2.9",
     "hastscript": "^9.0.0",
-    "inngest": "^3.39.1",
+    "inngest": "^4.4.0",
     "katex": "^0.16.19",
     "kysely": "^0.28.2",
     "markdown-it": "^14.1.0",

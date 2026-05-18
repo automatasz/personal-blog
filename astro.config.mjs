@@ -25,6 +25,11 @@ export default defineConfig({
   site: "https://matash.eu/",
   base: "/",
   trailingSlash: "ignore",
+  vite: {
+    server: {
+      allowedHosts: ["lievono"],
+    },
+  },
   integrations: [
     tailwind({
       nesting: true,
