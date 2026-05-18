@@ -11,8 +11,8 @@ export default inngest.createFunction(
   {
     id: "image-describe",
     retries: 1,
+    triggers: [{ event: "keyworder/image.describe" }],
   },
-  { event: "keyworder/image.describe" },
   async ({ event, step }) => {
     const parseResponse = openai.responses.parse.bind(openai.responses);
 
@@ -99,7 +99,7 @@ export default inngest.createFunction(
                 },
                 {
                   type: "input_text",
-                  text: output.titles?.map(title => title.title).join("\n"),
+                  text: (output.titles as { title: string | null }[]).map(title => title.title).join("\n"),
                 },
               ],
             },
