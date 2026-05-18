@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
+    "dev:all": "astro dev & npx inngest-cli@latest dev -u http://localhost:4321/api/inngest & wait",
     "start": "astro dev",
     "build": "astro build && pagefind --site .vercel/output/static",
     "preview": "astro preview",
