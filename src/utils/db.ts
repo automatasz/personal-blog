@@ -16,6 +16,8 @@ export interface Database {
   session: Tables["keyworder.session"];
   account: Tables["keyworder.account"];
   verification: Tables["keyworder.verification"];
+  batch: Tables["keyworder.batch"];
+  credit_audit: Tables["keyworder.credit_audit"];
 }
 
 interface Tables {
@@ -24,7 +26,19 @@ interface Tables {
   "keyworder.session": SessionTable;
   "keyworder.account": AccountTable;
   "keyworder.verification": VerificationTable;
+  "keyworder.batch": BatchTable;
+  "keyworder.credit_audit": CreditAuditTable;
 }
+
+export interface BatchTable {
+  id: string;
+  title: string | null;
+  created_at: ColumnType<Date, string | undefined, never>;
+}
+
+export type Batch = Selectable<BatchTable>;
+export type NewBatch = Insertable<BatchTable>;
+export type BatchUpdate = Updateable<BatchTable>;
 
 export interface DescriptionTable {
   id: Generated<string>;
@@ -37,6 +51,8 @@ export interface DescriptionTable {
   batch_id: string;
   tokens_used: number | null;
   result: string | null;
+  width: number | null;
+  height: number | null;
   created_at: ColumnType<Date, string | undefined, never>;
 }
 
@@ -53,6 +69,7 @@ export interface AuthUserTable {
   createdAt: Date;
   updatedAt: Date;
   role: string;
+  credits: number;
 }
 
 export type User = Selectable<AuthUserTable>;
@@ -99,6 +116,18 @@ export interface VerificationTable {
 
 export type Verification = Selectable<VerificationTable>;
 
+export interface CreditAuditTable {
+  id: Generated<string>;
+  user_id: string;
+  amount: number;
+  action: string;
+  metadata: Record<string, unknown> | null;
+  created_at: ColumnType<Date, never, never>;
+}
+
+export type CreditAudit = Selectable<CreditAuditTable>;
+export type NewCreditAudit = Insertable<CreditAuditTable>;
+
 const pool = new Pool({
   connectionString: DATABASE_URL,
   ssl: {
@@ -112,4 +141,5 @@ export const dialect = new PostgresDialect({
 
 export const db = new Kysely<Database>({
   dialect,
+  log: import.meta.env.DEV ? ["query", "error"] : ["error"],
 });

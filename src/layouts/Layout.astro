@@ -222,11 +222,9 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
   // check show sidebar
   if (window.location.pathname && HIDE_SIDEBAR_LINKS.some((link) => window.location.pathname.includes(link))) {
     const sidebar = document.getElementById("sidebar");
-    sidebar?.classList.add("sidebar-hide", "hidden");
-    sidebar?.classList.add("onload-animation");
-    const mainGrid = document.getElementById("main-grid");
-    mainGrid?.classList.remove("grid-cols-[17.5rem_auto]");
-    mainGrid?.classList.add("grid-cols-1");
+    const container = document.getElementById("swup-container");
+    sidebar?.classList.add("hidden");
+    container?.classList.remove("lg:col-span-1");
   }
 
   // Load settings when entering the site
@@ -335,6 +333,7 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
   }
 
   function setup() {
+    type Visit = { to: { url: string, document: Document }, from: { url: string }, containers: string[] };
     window.swup.hooks.on("link:click", () => {
       // Remove the delay for the first time page load
       document.documentElement.style.setProperty("--content-delay", "0ms");
@@ -353,7 +352,7 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
       }
     });
     window.swup.hooks.on("content:replace", initCustomScrollbar);
-    window.swup.hooks.on("visit:start", (visit: { to: { url: string } }) => {
+    window.swup.hooks.on("visit:start", (visit: Visit) => {
       // change banner height immediately when a link is clicked
       const bodyElement = document.querySelector("body");
       if (pathsEqual(visit.to.url, url("/"))) {
@@ -372,6 +371,48 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
       const toc = document.getElementById("toc-wrapper");
       if (toc) {
         toc.classList.add("toc-not-ready");
+      }
+
+      const sidebar = document.getElementById("sidebar");
+      const sidebarCategories = document.getElementById("categories");
+      const sidebarTags = document.getElementById("tags");
+      const sidebarProfile = document.getElementById("sidebar-profile");
+        
+      if (HIDE_SIDEBAR_LINKS.some((link) => visit.to.url.includes(link))) {
+        sidebar?.classList.add("transition-swup-fade");
+        sidebar?.classList.remove("onload-animation");
+        sidebarCategories?.classList.add("transition-swup-fade");
+        sidebarTags?.classList.add("transition-swup-fade");
+      } else if ( // from non-hidden to non-hidden
+        !HIDE_SIDEBAR_LINKS.some((link) => visit.from.url.includes(link))
+        && !HIDE_SIDEBAR_LINKS.some((link) => visit.to.url.includes(link))
+      ) {
+        sidebar?.classList.remove("transition-swup-fade", "hidden", "onload-animation");
+        sidebarProfile?.classList.remove("onload-animation");
+        sidebarCategories?.classList.remove("onload-animation", "transition-swup-fade");
+        sidebarTags?.classList.remove("onload-animation", "transition-swup-fade");
+      }
+    });
+    window.swup.hooks.on("content:replace", (visit: Visit) => {
+      const sidebar = document.getElementById("sidebar");
+      const sidebarCategories = document.getElementById("categories");
+      const sidebarTags = document.getElementById("tags");
+      const sidebarProfile = document.getElementById("sidebar-profile");
+      const container = document.getElementById("swup-container");
+      // to hidden
+      if (HIDE_SIDEBAR_LINKS.some((link) => visit.to.url.includes(link))) {
+        sidebar?.classList.add("hidden");
+        container?.classList.remove("lg:col-span-1");
+      } else if ( // from hidden to non-hidden
+        HIDE_SIDEBAR_LINKS.some((link) => visit.from.url.includes(link))
+        && !HIDE_SIDEBAR_LINKS.some((link) => visit.to.url.includes(link))
+      ) {
+        sidebar?.classList.remove("hidden");
+
+        sidebar?.classList.add("transition-swup-fade", "onload-animation");
+        sidebarProfile?.classList.add("onload-animation");
+        sidebarCategories?.classList.add("onload-animation", "transition-swup-fade");
+        sidebarTags?.classList.add("onload-animation", "transition-swup-fade");
       }
     });
     window.swup.hooks.on("page:view", () => {
@@ -394,36 +435,6 @@ const bannerOffset = bannerOffsetByPosition[siteConfig.banner.position || "cente
           toc.classList.remove("toc-not-ready");
         }
       }, 200);
-    });
-    window.swup.hooks.on("animation:out:start", (visit: { to: { url: string } }) => {
-      const sidebar = document.getElementById("sidebar");
-      if (!sidebar) {
-        return;
-      }
-
-      if (!HIDE_SIDEBAR_LINKS.some((link) => visit.to.url.includes(link))) {
-        sidebar.classList.remove("sidebar-hide", "hidden");
-        sidebar.classList.add("onload-animation");
-        return;
-      }
-
-      sidebar.classList.remove("onload-animation");
-      sidebar.classList.add("sidebar-hide");
-    });
-    window.swup.hooks.on("animation:out:end", (visit: { to: { url: string } }) => {
-      const mainGrid = document.getElementById("main-grid");
-      if (!mainGrid) {
-        return;
-      }
-
-      if (!HIDE_SIDEBAR_LINKS.some((link) => visit.to.url.includes(link))) {
-        mainGrid.classList.remove("grid-cols-1");
-        mainGrid.classList.add("grid-cols-[17.5rem_auto]");
-        return;
-      }
-
-      mainGrid.classList.remove("grid-cols-[17.5rem_auto]");
-      mainGrid.classList.add("grid-cols-1");
     });
   }
 

@@ -11,9 +11,10 @@ interface Props {
   alt?: string;
   position?: string;
   basePath?: string;
+  fetchpriority?: "low" | "high" | "auto" | null;
 }
 
-const { id, src, alt, position = "center", basePath = "/" } = Astro.props;
+const { id, src, alt, position = "center", basePath = "/", fetchpriority = "low" } = Astro.props;
 const className = Astro.props.class;
 
 const isLocal = !(src.startsWith("/") || src.startsWith("http") || src.startsWith("https") || src.startsWith("data:"));
@@ -40,6 +41,6 @@ const imageStyle = `object-position: ${position}`;
 
 <div class:list={[className, "overflow-hidden relative"]} id={id}>
   <div class="transition absolute inset-0 dark:bg-black/10 bg-opacity-50 pointer-events-none"></div>
-  {isLocal && img && <Image alt={alt || ""} class:list={imageClass} loading="eager" src={img} style={imageStyle} />}
-  {!isLocal && <img alt={alt || ""} class:list={imageClass} src={isPublic ? url(src) : src} style={imageStyle} />}
+  {isLocal && img && <Image alt={alt || ""} class:list={imageClass} loading="eager" src={img} style={imageStyle} fetchpriority={fetchpriority} />}
+  {!isLocal && <img alt={alt || ""} class:list={imageClass} src={isPublic ? url(src) : src} style={imageStyle} fetchpriority={fetchpriority} />}
 </div>

@@ -8,6 +8,9 @@ export const zh_TW: Translation = {
   [Key.search]: "搜尋",
   [Key.gallery]: "畫廊",
 
+  [Key.keyworder]: "Keyworder",
+  [Key.batch]: "Keywording results",
+
   [Key.tags]: "標籤",
   [Key.categories]: "分類",
   [Key.recentPosts]: "最新文章",

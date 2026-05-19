@@ -8,6 +8,9 @@ export const th: Translation = {
   [Key.search]: "ค้นหา",
   [Key.gallery]: "เฉลียง",
 
+  [Key.keyworder]: "Keyworder",
+  [Key.batch]: "Keywording results",
+
   [Key.tags]: "ป้ายกำกับ",
   [Key.categories]: "หมวดหมู่",
   [Key.recentPosts]: "โพสต์ล่าสุด",

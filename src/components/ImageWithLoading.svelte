@@ -1,7 +1,13 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import type { Description } from "@utils/db";
-  let { description, appId }: { appId: string; description: Description } = $props();
+  let {
+    description,
+    appId,
+  }: {
+    appId: string;
+    description: Pick<Description, "file_id" | "title" | "width" | "height">;
+  } = $props();
   let loading = $state(true);
   let error = $state(false);
 
@@ -16,7 +22,9 @@
 </script>
 
 {#if error}
-  <div class="w-full h-96 bg-black/10 z-10 text-white flex justify-center items-center">
+  <div
+    class="w-full h-96 bg-black/10 z-10 text-white flex justify-center items-center"
+  >
     <Icon class="text-[4rem]" icon="icon-park-outline:fail-picture" />
   </div>
 {:else}
@@ -27,10 +35,14 @@
     loading="lazy"
     onload={completeLoading}
     onerror={showError}
+    width={description.width}
+    height={description.height}
   />
 {/if}
 {#if loading}
-  <div class="absolute inset-0 w-full h-full bg-black/10 z-10 text-white flex justify-center items-center">
+  <div
+    class="absolute inset-0 w-full h-full bg-black/10 z-10 text-white flex justify-center items-center"
+  >
     <Icon class="text-[4rem]" icon="line-md:downloading-loop" />
   </div>
 {/if}

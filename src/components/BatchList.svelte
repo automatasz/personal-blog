@@ -5,7 +5,11 @@
   import Icon from "@iconify/svelte";
   import { daysAgo, daysAgoWord, getTime } from "@utils/date-utils";
 
-  type DescriptionBatchId = Pick<Description, "batch_id" | "created_at"> & { number_of_images: number };
+  type DescriptionBatchId = Pick<Description, "id" | "created_at"> & {
+    number_of_images: number;
+    title: string | null;
+  };
+
   let batches: DescriptionBatchId[] | undefined = $state(undefined);
   let errorMessage: string | undefined = $state(undefined);
 
@@ -20,34 +24,61 @@
         throw error;
       }
 
-      batches = data;
+      batches = data.map((batch) => ({
+        ...batch,
+        number_of_images: Number(batch.number_of_images),
+      }));
     });
+  }
+
+  function getImageLabel(numberOfImages: number) {
+    if (
+      numberOfImages === 1 ||
+      (numberOfImages !== 11 && numberOfImages !== 111 && numberOfImages % 10 === 1)
+    ) {
+      return "image";
+    }
+
+    return "images";
   }
 </script>
 
 <section class="text-75 space-y-4">
   <h3 class="font-black text-2xl text-90">Batches created so far</h3>
   {#if errorMessage}
-    <p class="text-red-600">Error when displaying finished batches: {errorMessage}.</p>
+    <p class="text-red-600">
+      Error when displaying finished batches: {errorMessage}.
+    </p>
   {:else if !batches}
-    <Icon class="text-[1.50rem]" icon="line-md:loading-loop" aria-label="loading" />
+    <Icon
+      class="text-[1.50rem]"
+      icon="line-md:loading-loop"
+      aria-label="loading"
+    />
   {/if}
   <ul class="list-none space-y-2">
     {#if batches}
       {#if batches.length === 0}
-        <p>Once you upload some images, the results can be accessed from this page.</p>
+        <p>
+          Once you upload some images, the results can be accessed from this
+          page.
+        </p>
       {:else}
-        {#each batches as description (description.batch_id)}
+        {#each batches as description (description.id)}
           <a
-            href={`/batch?id=${description.batch_id}`}
+            href={`/batch?id=${description.id}`}
+            title={description.created_at.toLocaleString()}
             class="group cursor-pointer p-4 flex flex-row gap-4 justify-between items-center hover:bg-[var(--btn-plain-bg-hover)] transition ease-in-out duration-300 rounded-lg space-y-1"
           >
             <div>
               <div class="text-lg text-75 font-extrabold">
-                {description.number_of_images}
-                {description.number_of_images > 1 ? "images" : "image"}
+                {description.title ?? "Untitled batch"}
               </div>
-              <div class="text-sm text-50">
+              <div class="text-base text-50 font-extrabold">
+                {description.number_of_images}
+                {getImageLabel(description.number_of_images)}
+              </div>
+              <div class="text-sm text-30">
                 {daysAgoWord(daysAgo(description.created_at))}
                 {getTime(description.created_at)}
               </div>

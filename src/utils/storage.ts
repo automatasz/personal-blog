@@ -1,6 +1,7 @@
 import { UPLOADTHING_TOKEN } from "astro:env/server";
-import { UTApi, UploadThingError, createUploadthing, type FileRouter } from "uploadthing/server";
-import { checkIfAdminAndGetUserId } from "./actions";
+import { UTApi, createUploadthing, type FileRouter } from "uploadthing/server";
+import { checkIfSignedInAndGetUserId, deductCredits } from "./actions";
+import { CREDIT_COST_UPLOAD } from "@/constants/credit-costs";
 
 export const uploadthing = new UTApi({
   token: UPLOADTHING_TOKEN,
@@ -24,21 +25,15 @@ export const ourFileRouter: FileRouter = {
     // Set permissions and file types for this FileRoute
     .middleware(async ({ req }) => {
       // This code runs on your server before upload
-      const user = await checkIfAdminAndGetUserId(req.headers);
-
-      // If you throw, the user will not be able to upload
-      if (!user) {
-        throw new UploadThingError("Unauthorized");
-      }
+      const userId = await checkIfSignedInAndGetUserId(req.headers);
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
-      return { userId: user };
+      return { userId };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code RUNS ON YOUR SERVER after upload
-      console.log("Upload complete for userId:", metadata.userId);
-
-      console.log("file url", file.ufsUrl);
+      await deductCredits(metadata.userId, CREDIT_COST_UPLOAD, "upload", { fileKey: file.key });
+      console.log("Upload complete for userId:", metadata.userId, "1 credit deducted");
 
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
       return { uploadedBy: metadata.userId };

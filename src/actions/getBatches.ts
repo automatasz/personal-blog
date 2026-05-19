@@ -1,21 +1,23 @@
 import { defineAction } from "astro:actions";
-import { checkIfAdminAndGetUserId } from "@utils/actions";
+import { checkIfSignedInAndGetUserId } from "@utils/actions";
 import { db } from "@utils/db";
 
 export const getBatches = defineAction({
   accept: "json",
-  handler: async (input, context) => {
-    const userId = await checkIfAdminAndGetUserId(context.request.headers);
+  handler: async (_input, context) => {
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
     return db
       .withSchema("keyworder")
       .selectFrom("description")
+      .leftJoin("batch", "batch.id", "description.batch_id")
       .select([
-        "batch_id",
-        db.fn.min("created_at").as("created_at"),
-        db.fn.count<number>("id").as("number_of_images"),
+        "description.batch_id as id",
+        "batch.title",
+        db.fn.min("description.created_at").as("created_at"),
+        db.fn.count("description.id").as("number_of_images"),
       ])
-      .where("user_id", "=", userId)
-      .groupBy("batch_id")
+      .where("description.user_id", "=", userId)
+      .groupBy(["description.batch_id", "batch.title", "batch.created_at"])
       .orderBy("created_at", "desc")
       .execute();
   },

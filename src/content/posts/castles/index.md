@@ -3,7 +3,7 @@ title: Castles
 published: 2024-06-27
 description: Sharing some creations I worked on. Let’s explore how castles can be depicted differently in art.
 tags: [Images]
-category: Artificial Intelligence
+category: Art
 draft: false
 ---
 

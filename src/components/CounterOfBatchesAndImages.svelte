@@ -3,7 +3,7 @@
   const {
     stats,
     error,
-  }: { stats: { imageCount: number; batchCount: number; tokenSum: number } | undefined; error?: string } = $props();
+  }: { stats: { imageCount: number; batchCount: number; tokenSum: number; creditsRemaining: number } | undefined; error?: string } = $props();
 </script>
 
 <section class="text-75 space-y-4 mt-8 mb-12">
@@ -25,6 +25,10 @@
       <div class="inline-grid w-full py-4 px-6">
         <div class="col-start-1 whitespace-nowrap">Tokens used</div>
         <div class="col-start-1 whitespace-nowrap text-4xl font-extrabold">{stats.tokenSum}</div>
+      </div>
+      <div class="inline-grid w-full py-4 px-6">
+        <div class="col-start-1 whitespace-nowrap">Credits remaining</div>
+        <div class="col-start-1 whitespace-nowrap text-4xl font-extrabold">{stats.creditsRemaining}</div>
       </div>
     </div>
   {:else}

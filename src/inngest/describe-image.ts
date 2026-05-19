@@ -1,16 +1,18 @@
 import { inngest } from "./client";
 import { zodTextFormat } from "openai/helpers/zod";
-import { descriptionSchema } from "@/inngest/types";
+import { batchSchema, descriptionSchema } from "@/inngest/types";
 import { db, type DescriptionUpdate } from "@utils/db";
 import { openai } from "@utils/ai";
-import { UPLOADTHING_APP_ID } from "astro:env/server";
+import { AI_MODEL } from "@/constants/ai";
+import { UPLOADTHING_APP_ID } from "astro:env/client";
+import { getBatchSuccessCount, getBatchTitles } from "@utils/utils.db";
 
 export default inngest.createFunction(
   {
     id: "image-describe",
-    retries: 3,
+    retries: 1,
+    triggers: [{ event: "keyworder/image.describe" }],
   },
-  { event: "keyworder/image.describe" },
   async ({ event, step }) => {
     const parseResponse = openai.responses.parse.bind(openai.responses);
 
@@ -18,7 +20,7 @@ export default inngest.createFunction(
       "openai.wrap.image.describe",
       parseResponse,
       {
-        model: "gpt-4.1-nano",
+        model: AI_MODEL,
         input: [
           {
             role: "user",
@@ -61,8 +63,75 @@ export default inngest.createFunction(
         .where("id", "=", event.data.descriptionId)
         .returningAll()
         .executeTakeFirstOrThrow();
-      return record;
+
+      const { successCount, totalCount } = await getBatchSuccessCount(record.batch_id)
+        .where("user_id", "=", record.user_id)
+        .executeTakeFirstOrThrow();
+
+      let titles: { title: string | null }[] | null = null;
+      if (successCount === totalCount) {
+        titles = await getBatchTitles(record.batch_id)
+          .where("user_id", "=", record.user_id)
+          .execute();
+      }
+
+      return {
+        description: record,
+        successCount,
+        totalCount,
+        titles,
+      };
     });
+
+    if (output.successCount === output.totalCount && output.titles) {
+      const createTitleResponse = await step.ai.wrap(
+        "openai.wrap.batch.title",
+        parseResponse,
+        {
+          model: AI_MODEL,
+          input: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "input_text",
+                  text: "You are a newspaper writer who is an expert at their job. You are given a collection of image titles. Your task is to create a compelling title that suits the collection of these images well",
+                },
+                {
+                  type: "input_text",
+                  text: (output.titles as { title: string | null }[]).map(title => title.title).join("\n"),
+                },
+              ],
+            },
+          ],
+          text: {
+            format: zodTextFormat(batchSchema, "title"),
+          },
+        },
+      );
+
+      await step.run("batch.complete", async () => {
+        const batchTitle = batchSchema.safeParse(createTitleResponse.output_parsed);
+
+        if (batchTitle.success) {
+          await db.withSchema("keyworder").insertInto("batch")
+            .values({
+              id: output.description.batch_id,
+              title: batchTitle.data.title,
+            })
+            .executeTakeFirst()
+            .catch((e) => {
+              if (e.code === "23505") {
+                console.error(`Batch ${output.description.batch_id} already exists ant its title cannot be created`);
+                return;
+              }
+              throw e;
+            });
+          return batchTitle.data.title;
+        }
+        return "No title was created";
+      });
+    }
 
     return output;
   },
