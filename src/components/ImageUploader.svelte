@@ -12,7 +12,6 @@
   import { twMerge } from "tailwind-merge";
   import ImageWithLoading from "./ImageWithLoading.svelte";
   import { UPLOADTHING_APP_ID } from "astro:env/client";
-  import { CREDIT_COST_UPLOAD, CREDIT_COST_DESCRIBE } from "@/constants/credit-costs";
 
   type FileForUpload = {
     key: string;
@@ -27,11 +26,18 @@
   let errorMessage: string | undefined = $state(undefined);
   let files: FileForUpload[] = $state([]);
   let creditsRemaining: number | undefined = $state(undefined);
+  let creditCosts = $state({ upload: 1, describe: 7 });
 
   onMount(() => {
     actions.getStats(null).then(({ data }) => {
       if (data) {
         creditsRemaining = data.creditsRemaining;
+        if (data.creditCosts) {
+          creditCosts = {
+            upload: data.creditCosts.upload,
+            describe: data.creditCosts.describe,
+          };
+        }
       }
     });
   });
@@ -40,6 +46,12 @@
     actions.getStats(null).then(({ data }) => {
       if (data) {
         creditsRemaining = data.creditsRemaining;
+        if (data.creditCosts) {
+          creditCosts = {
+            upload: data.creditCosts.upload,
+            describe: data.creditCosts.describe,
+          };
+        }
       }
     });
   }
@@ -132,7 +144,7 @@
           <button
             class="btn-regular rounded-lg active:scale-90 py-3 px-6 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             type="submit"
-            disabled={creditsRemaining !== undefined && files.length * CREDIT_COST_DESCRIBE > creditsRemaining}
+            disabled={creditsRemaining !== undefined && files.length * creditCosts.describe > creditsRemaining}
           >
             Describe <Icon
               class="text-[1.50rem]"
@@ -148,10 +160,10 @@
           </button>
         </form>
       </div>
-      {#if creditsRemaining !== undefined && files.length * CREDIT_COST_DESCRIBE > creditsRemaining}
+      {#if creditsRemaining !== undefined && files.length * creditCosts.describe > creditsRemaining}
         <p class="text-red-600 text-sm">
-          Describing {files.length} images costs {files.length * CREDIT_COST_DESCRIBE} credits, but you only have {creditsRemaining}.
-          Remove {Math.ceil((files.length * CREDIT_COST_DESCRIBE - creditsRemaining) / CREDIT_COST_DESCRIBE)} images to continue.
+          Describing {files.length} images costs {files.length * creditCosts.describe} credits, but you only have {creditsRemaining}.
+          Remove {Math.ceil((files.length * creditCosts.describe - creditsRemaining) / creditCosts.describe)} images to continue.
         </p>
       {/if}
     {:else}
@@ -172,7 +184,7 @@
       {/if}
     {/if}
 
-    <p class="text-50 text-sm">{CREDIT_COST_UPLOAD} credit per upload + {CREDIT_COST_DESCRIBE} credits per description</p>
+    <p class="text-50 text-sm">{creditCosts.upload} credit per upload + {creditCosts.describe} credits per description</p>
     {#if creditsRemaining !== undefined}
       <p class="text-75 text-sm font-bold">Credits remaining: {creditsRemaining}</p>
     {/if}

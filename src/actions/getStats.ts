@@ -1,10 +1,11 @@
 import { defineAction } from "astro:actions";
-import { checkIfSignedInAndGetUserId } from "@utils/actions";
+import { checkIfSignedInAndGetUserId, getCreditCosts } from "@utils/actions";
 import { db } from "@utils/db";
 
 export const getStats = defineAction({
   handler: async (input, context) => {
     const userId = await checkIfSignedInAndGetUserId(context.request.headers);
+
     const { batchCount } = await db
       .withSchema("keyworder")
       .selectFrom("description")
@@ -39,11 +40,14 @@ export const getStats = defineAction({
       .where("id", "=", userId)
       .executeTakeFirstOrThrow();
 
+    const creditCosts = await getCreditCosts();
+
     return {
       batchCount: Number(batchCount),
       imageCount: Number(imageCount),
       tokenSum: Number(tokenSum),
       creditsRemaining: Number(user.credits),
+      creditCosts,
     };
   },
 });
