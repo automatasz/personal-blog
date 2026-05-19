@@ -4,10 +4,6 @@ import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { UPLOADTHING_APP_ID } from "astro:env/client";
 import ImageDescriptions from "@components/ImageDescriptions.svelte";
-import { auth } from "@utils/auth";
-
-const session = await auth.api.getSession({ headers: Astro.request.headers });
-if (!session?.session) return Astro.redirect("/sign-in");
 ---
 
 <MainGridLayout description={i18n(I18nKey.batch)} title={i18n(I18nKey.batch)}>
