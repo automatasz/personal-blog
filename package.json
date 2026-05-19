@@ -11,6 +11,7 @@
     "astro": "astro",
     "type-check": "tsc --noEmit --isolatedDeclarations",
     "new-post": "node scripts/new-post.js",
+    "cleanup-orphans": "npx tsx scripts/cleanup-orphaned-uploads.ts",
     "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {

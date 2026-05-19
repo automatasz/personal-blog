@@ -4,6 +4,7 @@ import { inngest } from "@/inngest";
 import { checkIfSignedInAndGetUserId, deductCredits } from "@utils/actions";
 import { CREDIT_COST_DESCRIBE } from "@/constants/credit-costs";
 import { db } from "@utils/db";
+import { uploadthing } from "@utils/storage";
 
 export const postFileIds = defineAction({
   input: z.object({
@@ -43,6 +44,7 @@ export const postFileIds = defineAction({
         .where("batch_id", "=", batchId)
         .where("user_id", "=", userId)
         .execute();
+      await uploadthing.deleteFiles(input.files.map(f => f.id));
       throw new Error("Failed to start creating descriptions");
     }
 
