@@ -18,12 +18,6 @@ export const postFileIds = defineAction({
     const userId = await checkIfSignedInAndGetUserId(context.request.headers);
     const batchId = crypto.randomUUID();
 
-    // Deduct describe credits before inserting rows or dispatching events
-    await deductCredits(userId, input.files.length * CREDIT_COST_DESCRIBE, "describe", {
-      batchId,
-      imageCount: input.files.length,
-    });
-
     const record = await db.withSchema("keyworder").insertInto("description")
       .values(input.files.map(file => ({
         file_id: file.id,
@@ -40,15 +34,22 @@ export const postFileIds = defineAction({
       return sendEvent(description.file_id, description.id);
     });
 
-    // make sure events were dispatched
     try {
       await Promise.all(events);
     }
     catch (e) {
-      // display error in the console for inspection
       console.error("batch id", batchId, "user id", userId, e);
+      await db.withSchema("keyworder").deleteFrom("description")
+        .where("batch_id", "=", batchId)
+        .where("user_id", "=", userId)
+        .execute();
       throw new Error("Failed to start creating descriptions");
     }
+
+    await deductCredits(userId, input.files.length * CREDIT_COST_DESCRIBE, "describe", {
+      batchId,
+      imageCount: input.files.length,
+    });
 
     return batchId;
   },
