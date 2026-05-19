@@ -1,8 +1,7 @@
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { db } from "@utils/db";
-import { checkIfSignedInAndGetUserId, deductCredits } from "@utils/actions";
-import { CREDIT_COST_REGENERATE } from "@/constants/credit-costs";
+import { checkIfSignedInAndGetUserId, deductCredits, getCreditCosts } from "@utils/actions";
 import { AI_MODEL } from "@/constants/ai";
 import { UPLOADTHING_APP_ID } from "astro:env/client";
 import { zodTextFormat } from "openai/helpers/zod";
@@ -101,7 +100,8 @@ export const regenerateDescription = defineAction({
       };
     }
 
-    await deductCredits(userId, CREDIT_COST_REGENERATE, "regenerate", { descriptionId: input.descriptionId });
+    const costs = await getCreditCosts();
+    await deductCredits(userId, costs.regenerate, "regenerate", { descriptionId: input.descriptionId });
     await db.withSchema("keyworder").updateTable("description")
       .set({
         title: response.output_parsed.title,

@@ -1,8 +1,7 @@
 import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { inngest } from "@/inngest";
-import { checkIfSignedInAndGetUserId, deductCredits } from "@utils/actions";
-import { CREDIT_COST_DESCRIBE } from "@/constants/credit-costs";
+import { checkIfSignedInAndGetUserId, deductCredits, getCreditCosts } from "@utils/actions";
 import { db } from "@utils/db";
 import { uploadthing } from "@utils/storage";
 
@@ -48,7 +47,8 @@ export const postFileIds = defineAction({
       throw new Error("Failed to start creating descriptions");
     }
 
-    await deductCredits(userId, input.files.length * CREDIT_COST_DESCRIBE, "describe", {
+    const costs = await getCreditCosts();
+    await deductCredits(userId, input.files.length * costs.describe, "describe", {
       batchId,
       imageCount: input.files.length,
     });

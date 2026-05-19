@@ -18,6 +18,7 @@ export interface Database {
   verification: Tables["keyworder.verification"];
   batch: Tables["keyworder.batch"];
   credit_audit: Tables["keyworder.credit_audit"];
+  app_settings: Tables["keyworder.app_settings"];
 }
 
 interface Tables {
@@ -28,6 +29,7 @@ interface Tables {
   "keyworder.verification": VerificationTable;
   "keyworder.batch": BatchTable;
   "keyworder.credit_audit": CreditAuditTable;
+  "keyworder.app_settings": AppSettingsTable;
 }
 
 export interface BatchTable {
@@ -127,6 +129,17 @@ export interface CreditAuditTable {
 
 export type CreditAudit = Selectable<CreditAuditTable>;
 export type NewCreditAudit = Insertable<CreditAuditTable>;
+
+export interface AppSettingsTable {
+  key: string;
+  value: Record<string, unknown>;
+  updated_at: ColumnType<Date, string | undefined, Date>;
+  updated_by: string | null;
+}
+
+export type AppSettings = Selectable<AppSettingsTable>;
+export type NewAppSettings = Insertable<AppSettingsTable>;
+export type AppSettingsUpdate = Updateable<AppSettingsTable>;
 
 const pool = new Pool({
   connectionString: DATABASE_URL,

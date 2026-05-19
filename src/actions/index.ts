@@ -4,6 +4,7 @@ import { getBatches } from "./getBatches";
 import { postFileIds } from "./postFileIds";
 import { getStats } from "./getStats";
 import { updateDescription, regenerateDescription } from "./updateDescription";
+import { getAppSettings, updateAppSettings } from "./appSettings";
 
 export const server = {
   getBatch,
@@ -13,4 +14,6 @@ export const server = {
   getStats,
   updateDescription,
   regenerateDescription,
+  getAppSettings,
+  updateAppSettings,
 };

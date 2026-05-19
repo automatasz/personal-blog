@@ -1,0 +1,40 @@
+---
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import AdminPanel from "@components/AdminPanel.svelte";
+import { requireAdmin } from "@utils/actions";
+import { db } from "@utils/db";
+
+export const prerender = false;
+
+let settingsData: Record<string, number> | null = null;
+
+try {
+  await requireAdmin(Astro.request.headers);
+
+  const row = await db
+    .withSchema("keyworder")
+    .selectFrom("app_settings")
+    .select("value")
+    .where("key", "=", "credit_costs")
+    .executeTakeFirst();
+
+  if (row) {
+    settingsData = row.value as Record<string, number>;
+  }
+}
+catch {
+  return Astro.redirect("/");
+}
+---
+
+<MainGridLayout description={i18n(I18nKey.home)} title="Admin Console">
+  <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+    <div class="card-base z-10 px-9 py-6 relative w-full text-75 space-y-2">
+      <h1 class="text-90 text-3xl font-black">Admin Console</h1>
+      <p class="text-75">Manage credit costs and application settings.</p>
+      <AdminPanel client:load initialCosts={settingsData} />
+    </div>
+  </div>
+</MainGridLayout>

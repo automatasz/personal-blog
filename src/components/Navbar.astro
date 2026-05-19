@@ -60,6 +60,13 @@ let links: NavBarLink[] = navBarConfig.links.map((item: NavBarLink | LinkPreset)
           );
         })
       }
+      <a
+        aria-label="Admin Console"
+        class="btn-plain scale-animation rounded-lg h-11 font-bold px-5 active:scale-95 admin-only !hidden"
+        href={url("/admin/")}
+      >
+        <div class="flex items-center">Admin Console</div>
+      </a>
     </div>
     <div class="flex">
       <!--<SearchPanel client:load>-->
@@ -155,8 +162,25 @@ let links: NavBarLink[] = navBarConfig.links.map((item: NavBarLink | LinkPreset)
     });
   }
 
+  async function showAdminLinks() {
+    const buttons = document.querySelectorAll(".admin-only");
+    if (buttons.length === 0) {
+      return;
+    }
+
+    const session = await authClientVanilla.getSession();
+    if (session.data?.user.role !== "admin") {
+      return;
+    }
+
+    buttons.forEach((button) => {
+      button.classList.remove("!hidden");
+    });
+  }
+
   loadButtonScript();
   showAuthenticatedLinks();
+  showAdminLinks();
 </script>
 
 <script define:vars={{ scriptUrl: url("/pagefind/pagefind.js"), isProd: import.meta.env.PROD }} is:inline>
