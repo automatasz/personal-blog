@@ -138,5 +138,8 @@ export default defineConfig({
     // Used for all `<Image />` and `<Picture />` components unless overridden with a prop
     layout: "constrained",
   },
-  adapter: cloudflare({ mode: "directory" }),
+  adapter: cloudflare({
+    imageService: "compile",
+    prerenderEnvironment: "node",
+  }),
 });

@@ -8,17 +8,17 @@ Full reference dump of the `personal-blog` codebase at `/home/user/projects/pers
 
 | Layer | Choice | Notes |
 |-------|--------|-------|
-| Framework | Astro 5 (SSR) + Svelte 5 | 37 .astro files, 12 .svelte files |
+| Framework | Astro 6 (SSR) + Svelte 5 | 37 .astro files, 12 .svelte files |
 | Database | PostgreSQL via Kysely 0.28 | All tables in `keyworder` schema |
 | Auth | better-auth 1.2 | Google OAuth + email/password, role-based (admin/user) |
 | Background jobs | Inngest 4.4 | Single function: `keyworder/image.describe` |
 | AI | OpenAI (GPT-4.1 Nano) | Image description + keyword generation |
 | File storage | UploadThing 7.7 | S3-compatible, max 128MB, 100 files |
 | CSS | Tailwind 3.4 + Stylus variables | Dark mode via `class` strategy |
-| Page transitions | Swup (@swup/astro 1.5) | Cache enabled, containers: `main`, `#toc` |
+| Page transitions | Swup (@swup/astro 1.8) | Cache enabled, containers: `main`, `#toc` |
 | Schema validation | Zod | Input validation for actions + Inngest |
 | Icons | Iconify (Svelte + Astro) | FA6 brands/regular/solid, Material Symbols |
-| Hosting | Cloudflare Pages | SSR via `@astrojs/cloudflare` adapter (directory mode) |
+| Hosting | Cloudflare Workers | SSR via `@astrojs/cloudflare` v13 adapter |
 | Fonts | DM Sans (headings), Roboto (body), JetBrains Mono (code) | |
 
 ---
@@ -65,10 +65,10 @@ src/
 ## Dependencies (production)
 
 ### Framework
-- `astro` 5.13.10
-- `svelte` ^5.5.3
-- `@astrojs/svelte` 7.1.1
-- `@astrojs/cloudflare` ^12.2.4
+- `astro` ^6.3.7
+- `svelte` ^5.55.9
+- `@astrojs/svelte` ^8.1.1
+- `@astrojs/cloudflare` ^13.5.4
 
 ### Database & Auth
 - `kysely` ^0.28.2
@@ -115,7 +115,7 @@ src/
 - `sharp` ^0.33.5
 
 ### UI
-- `@swup/astro` ^1.5.0
+- `@swup/astro` ^1.8.0
 - `@iconify/svelte` ^4.0.2
 - `@iconify-json/fa6-brands` ^1.2.3
 - `@iconify-json/fa6-regular` ^1.2.2
@@ -125,8 +125,8 @@ src/
 - `pagefind` ^1.3.0
 - `overlayscrollbars` ^2.10.1
 - `katex` ^0.16.19
-- `astro-icon` ^1.1.4
-- `astro-compress` ^2.3.5
+- `astro-icon` ^1.1.5
+- `astro-compress` ^2.4.1
 
 ### Fonts
 - `@fontsource-variable/jetbrains-mono` ^5.1.1
@@ -239,7 +239,7 @@ All tables in `keyworder` schema.
 - User model has `role` additional field (string, default "user", not inputtable)
 - Email/password + Google OAuth
 - Session cookie cache: 300s
-- Cloudflare Pages URL in trusted origins
+- Cloudflare Workers URL in trusted origins
 
 ### API Route (`src/pages/api/auth/[...all].ts`)
 - Catch-all handler, sets `x-forwarded-for` header
@@ -324,7 +324,7 @@ All tables in `keyworder` schema.
 | `/archive/` | `archive/index.astro` | Static | Archive listing |
 | `/archive/tag/[tag]` | `archive/tag/[tag].astro` | Static | Posts by tag |
 | `/archive/category/[category]` | `archive/category/[category].astro` | Static | Posts by category |
-| `/gallery` | `gallery.astro` | Static | Photo gallery |
+| `/gallery` | `gallery.astro` | SSR (Svelte onMount) | Photo gallery |
 | `/keyworder` | `keyworder.astro` | SSR | AI image keyworder |
 | `/batch` | `batch.astro` | SSR | Batch results |
 | `/my-account` | `my-account.astro` | `false` | User stats/batches |
@@ -401,7 +401,7 @@ Defined in `src/actions/`, exported via `src/actions/index.ts` as `server`.
 ## Configuration
 
 ### Astro Config (`astro.config.mjs`)
-- SSR via Cloudflare adapter (directory mode)
+- SSR via Cloudflare Workers adapter (v13)
 - Tailwind with nesting
 - Swup: cache=true, containers=["main", "#toc"], smooth scrolling, preloading
 - Icon sets: fa6-brands, fa6-regular, fa6-solid
@@ -529,6 +529,7 @@ Defined in `src/actions/`, exported via `src/actions/index.ts` as `server`.
 | `dev` | `INNGEST_DEV=1 astro dev --host` |
 | `dev:all` | astro dev + inngest-cli dev |
 | `build` | `astro build && pagefind --site dist` |
+| `deploy` | `wrangler deploy` |
 | `type-check` | `tsc --noEmit --isolatedDeclarations` |
 | `new-post` | `node scripts/new-post.js` |
 | `cleanup-orphans` | `npx tsx scripts/cleanup-orphaned-uploads.ts` |
