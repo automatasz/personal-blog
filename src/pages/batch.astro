@@ -10,18 +10,28 @@ import ImageDescriptions from "@components/ImageDescriptions.svelte";
   <div
     class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32"
   >
-    <div class="card-base z-10 px-9 py-6 relative w-full text-75 space-y-2">
-      <h1 class="text-90 text-3xl font-black">Keyworder results</h1>
-      <p class="text-75">
-        Here are the results of the images you have uploaded to Keyworder. You
-        can use the generated descriptions to add keywords to your images in
-        posts, photo stock websites or personal galleries.
-      </p>
-      <div class="pt-1">
-        <a
-          class="transition link text-[var(--primary)] font-medium"
-          href="/keyworder">go to upload</a
-        >
+    <div class="card-base z-10 px-9 py-8 relative w-full">
+      <div class="absolute inset-0 rounded-[var(--radius-large)] overflow-hidden pointer-events-none">
+        <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-[var(--primary)]/[0.03] blur-3xl"></div>
+      </div>
+      <div class="relative">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h1 class="text-90 text-3xl font-heading font-black tracking-tight">
+              Batch Results
+            </h1>
+            <p class="text-75 mt-1 max-w-xl">
+              Review AI-generated titles, descriptions, and keywords. Edit, regenerate, or export as CSV.
+            </p>
+          </div>
+          <a
+            class="btn-regular rounded-lg active:scale-90 py-2.5 px-5 flex items-center gap-2 shrink-0 transition-all hover:shadow-sm"
+            href="/keyworder"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+            Upload
+          </a>
+        </div>
       </div>
       <ImageDescriptions appId={UPLOADTHING_APP_ID} client:load />
     </div>

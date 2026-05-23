@@ -23,26 +23,29 @@
 </script>
 
 {#if $session.isPending || $session.isRefetching}
-  <button aria-label="Sign In or Sign Out" class="btn-regular rounded-lg active:scale-90 py-3 px-4 cursor-pointer grow">
+  <button
+    aria-label="Sign In or Sign Out"
+    class="btn-regular rounded-lg active:scale-90 py-3 px-4 cursor-pointer grow flex items-center gap-2"
+  >
+    <Icon class="text-[1.25rem] animate-spin" icon="material-symbols:autorenew-rounded" />
     Loading
-    <Icon class="text-[1.25rem]" icon="material-symbols:autorenew-rounded" />
   </button>
 {:else if $session.data}
   <button
     aria-label="Sign Out"
-    class="btn-regular rounded-lg active:scale-90 py-3 px-4 cursor-pointer grow"
+    class="btn-ghost rounded-lg active:scale-90 py-2.5 px-4 cursor-pointer flex items-center gap-2 group transition-all"
     onclick={signOut}
   >
-    Sign Out
-    <Icon class="text-[1.25rem]" icon="material-symbols:logout" />
+    <Icon class="text-[1.25rem] transition-transform duration-300 group-hover:-translate-x-0.5" icon="material-symbols:logout" />
+    <span>Sign Out</span>
   </button>
 {:else}
   <button
     aria-label="Sign In"
-    class="btn-regular rounded-lg active:scale-90 py-3 px-4 cursor-pointer grow"
+    class="btn-regular rounded-lg active:scale-90 py-3 px-6 cursor-pointer flex items-center gap-2 group transition-all"
     onclick={signIn}
   >
-    Sign In
-    <Icon class="text-[1.25rem]" icon="material-symbols:login" />
+    <Icon class="text-[1.25rem] transition-transform duration-300 group-hover:translate-x-0.5" icon="material-symbols:login" />
+    <span>Sign In with Google</span>
   </button>
 {/if}
