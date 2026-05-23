@@ -10,4 +10,12 @@ export const batchSchema = z.object({
   title: z.string(),
 });
 
+export interface DescribeEventPayload {
+  fileId: string;
+  descriptionId: string;
+  userId: string;
+  cost: number;
+  mode: "generate" | "regenerate";
+}
+
 
