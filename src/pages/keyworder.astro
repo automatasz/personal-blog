@@ -5,6 +5,8 @@ import MainGridLayout from "@layouts/MainGridLayout.astro";
 import KeyworderSvelte from "@components/Keyworder.svelte";
 import BatchList from "@components/BatchList.astro";
 import StatsGrid from "@components/StatsGrid.astro";
+
+export const prerender = false;
 ---
 
 <MainGridLayout description={i18n(I18nKey.keyworder)} title={i18n(I18nKey.keyworder)}>

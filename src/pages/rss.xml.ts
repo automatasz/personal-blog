@@ -1,3 +1,5 @@
+export const prerender = true;
+
 import { siteConfig } from "@/config";
 import rss from "@astrojs/rss";
 import { getSortedPosts } from "@utils/content-utils";

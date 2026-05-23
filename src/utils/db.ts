@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool } from "@neondatabase/serverless";
 import { DATABASE_URL } from "astro:env/server";
 import {
   Kysely,
@@ -141,12 +141,7 @@ export type AppSettings = Selectable<AppSettingsTable>;
 export type NewAppSettings = Insertable<AppSettingsTable>;
 export type AppSettingsUpdate = Updateable<AppSettingsTable>;
 
-const pool = new Pool({
-  connectionString: DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+const pool = new Pool({ connectionString: DATABASE_URL });
 
 export const dialect = new PostgresDialect({
   pool,

@@ -18,7 +18,7 @@ Full reference dump of the `personal-blog` codebase at `/home/user/projects/pers
 | Page transitions | Swup (@swup/astro 1.5) | Cache enabled, containers: `main`, `#toc` |
 | Schema validation | Zod | Input validation for actions + Inngest |
 | Icons | Iconify (Svelte + Astro) | FA6 brands/regular/solid, Material Symbols |
-| Hosting | Vercel | SSR via `@astrojs/vercel` adapter |
+| Hosting | Cloudflare Pages | SSR via `@astrojs/cloudflare` adapter (directory mode) |
 | Fonts | DM Sans (headings), Roboto (body), JetBrains Mono (code) | |
 
 ---
@@ -68,12 +68,11 @@ src/
 - `astro` 5.13.10
 - `svelte` ^5.5.3
 - `@astrojs/svelte` 7.1.1
-- `@astrojs/vercel` ^8.2.8
+- `@astrojs/cloudflare` ^12.2.4
 
-### Database
+### Database & Auth
 - `kysely` ^0.28.2
-- `pg` ^8.16.0
-- `@types/pg` ^8.15.4
+- `@neondatabase/serverless` ^1.1.3
 
 ### Auth
 - `better-auth` ^1.2.9
@@ -240,7 +239,7 @@ All tables in `keyworder` schema.
 - User model has `role` additional field (string, default "user", not inputtable)
 - Email/password + Google OAuth
 - Session cookie cache: 300s
-- Vercel branch URL in trusted origins
+- Cloudflare Pages URL in trusted origins
 
 ### API Route (`src/pages/api/auth/[...all].ts`)
 - Catch-all handler, sets `x-forwarded-for` header
@@ -402,7 +401,7 @@ Defined in `src/actions/`, exported via `src/actions/index.ts` as `server`.
 ## Configuration
 
 ### Astro Config (`astro.config.mjs`)
-- SSR via Vercel adapter
+- SSR via Cloudflare adapter (directory mode)
 - Tailwind with nesting
 - Swup: cache=true, containers=["main", "#toc"], smooth scrolling, preloading
 - Icon sets: fa6-brands, fa6-regular, fa6-solid
@@ -443,7 +442,7 @@ Defined in `src/actions/`, exported via `src/actions/index.ts` as `server`.
 | `INNGEST_API_URL` | server | secret |
 | `INNGEST_SIGNING_KEY` | server | secret |
 | `UPLOADTHING_TOKEN` | server | secret |
-| `VERCEL_BRANCH_URL` | server | secret, optional |
+| `CF_PAGES_URL` | server | secret, optional |
 
 ---
 
@@ -529,7 +528,7 @@ Defined in `src/actions/`, exported via `src/actions/index.ts` as `server`.
 |--------|---------|
 | `dev` | `INNGEST_DEV=1 astro dev --host` |
 | `dev:all` | astro dev + inngest-cli dev |
-| `build` | `astro build && pagefind --site .vercel/output/static` |
+| `build` | `astro build && pagefind --site dist` |
 | `type-check` | `tsc --noEmit --isolatedDeclarations` |
 | `new-post` | `node scripts/new-post.js` |
 | `cleanup-orphans` | `npx tsx scripts/cleanup-orphaned-uploads.ts` |
