@@ -2,13 +2,10 @@
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import CounterOfBatchesAndImages from "@components/CounterOfBatchesAndImages.svelte";
 import BatchList from "@components/BatchList.astro";
-import { actions } from "astro:actions";
+import StatsGrid from "@components/StatsGrid.astro";
 
 export const prerender = false;
-
-const { data, error } = await Astro.callAction(actions.getStats, null);
 ---
 
 <MainGridLayout description={i18n(I18nKey.batch)} title={i18n(I18nKey.batch)}>
@@ -19,7 +16,19 @@ const { data, error } = await Astro.callAction(actions.getStats, null);
         This is your account page. Here you can find your information and manage your account. The subscription details
         are also available here.
       </p>
-      <CounterOfBatchesAndImages client:load stats={data} error={error?.message} />
+      <StatsGrid server:defer>
+        <div slot="fallback" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map(() => (
+            <div class="card-base rounded-xl px-5 py-5 flex items-center gap-4">
+              <div class="w-11 h-11 rounded-xl bg-[var(--btn-plain-bg-hover)] animate-pulse shrink-0"></div>
+              <div class="space-y-2">
+                <div class="h-3.5 w-14 rounded bg-[var(--btn-plain-bg-hover)] animate-pulse"></div>
+                <div class="h-6 w-10 rounded bg-[var(--btn-plain-bg-hover)] animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </StatsGrid>
       <BatchList server:defer>
         <div slot="fallback" class="flex justify-center py-8">
           <svg class="text-2xl text-[var(--primary)] animate-spin" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

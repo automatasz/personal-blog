@@ -1,0 +1,88 @@
+---
+import { actions } from "astro:actions";
+
+const result = await Astro.callAction(actions.getStats, null);
+const { error, data } = result;
+
+function formatTokens(n: number): string {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
+  if (n >= 1000) return (n / 1000).toFixed(1) + "K";
+  return String(n);
+}
+---
+
+<section class="space-y-4 mt-6 mb-8">
+  <h3 class="font-heading font-bold text-xl text-90">So far, you&rsquo;ve created:</h3>
+  {
+    error ? (
+      <div class="card-base rounded-xl px-6 py-4 text-red-600 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>Error when loading stats: {(error as { message: string }).message}.</span>
+      </div>
+    ) : null
+  }
+  {
+    data ? (
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="card-base rounded-xl px-5 py-5 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-2xl text-[var(--primary)]">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M8 7h8"/><path d="M8 11h5"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-50 font-medium">Batches</p>
+            <p class="text-2xl font-heading font-bold text-90">{data.batchCount}</p>
+          </div>
+        </div>
+        <div class="card-base rounded-xl px-5 py-5 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-2xl text-[var(--primary)]">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-50 font-medium">Images</p>
+            <p class="text-2xl font-heading font-bold text-90">{data.imageCount}</p>
+          </div>
+        </div>
+        <div class="card-base rounded-xl px-5 py-5 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-2xl text-[var(--primary)]">
+              <line x1="12" y1="15" x2="12" y2="18"/><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 13 12 18 22 13"/><polyline points="2 18 12 23 22 18"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-50 font-medium">Tokens</p>
+            <p class="text-2xl font-heading font-bold text-90">{formatTokens(data.tokenSum)}</p>
+          </div>
+        </div>
+        <div class="card-base rounded-xl px-5 py-5 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-2xl text-[var(--primary)]">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-50 font-medium">Credits</p>
+            <p class="text-2xl font-heading font-bold text-90">{data.creditsRemaining}</p>
+          </div>
+        </div>
+      </div>
+    ) : (
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[0, 1, 2, 3].map(() => (
+          <div class="card-base rounded-xl px-5 py-5 flex items-center gap-4">
+            <div class="w-11 h-11 rounded-xl bg-[var(--btn-plain-bg-hover)] animate-pulse shrink-0"></div>
+            <div class="space-y-2">
+              <div class="h-3.5 w-14 rounded bg-[var(--btn-plain-bg-hover)] animate-pulse"></div>
+              <div class="h-6 w-10 rounded bg-[var(--btn-plain-bg-hover)] animate-pulse"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+</section>
