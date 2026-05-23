@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { fade } from "svelte/transition";
+  import { fly } from "svelte/transition";
   import { onMount } from "svelte";
   import { actions } from "astro:actions";
   import { navigate } from "astro:transitions/client";
@@ -118,68 +118,114 @@
 
     navigate(`/batch?id=${data}`);
   }
+
+  let totalCost = $derived(files.length * creditCosts.describe);
+  let insufficientCredits = $derived(
+    creditsRemaining !== undefined && totalCost > creditsRemaining
+  );
+  let needToRemove = $derived(
+    insufficientCredits
+      ? Math.ceil((totalCost - creditsRemaining!) / creditCosts.describe)
+      : 0
+  );
 </script>
 
-<div class="space-y-4 mt-12 mb-16">
+<div class="space-y-6 mt-8 mb-16">
   {#if isSubmitting}
-    {#if errorMessage}
-      <h3 class="text-red-600">
-        Error when uploading files: {errorMessage}. Please reach out to the
-        administrator if this error continues to occur.
-      </h3>
-    {:else}
-      <h3 class="font-black text-2xl text-90 flex flex-row gap-2 grow">
-        Requesting descriptions...
-        <Icon
-          class="text-[1.50rem]"
-          icon="line-md:loading-loop"
-          aria-label="loading"
-        />
-      </h3>
-    {/if}
+    <div class="card-base rounded-xl px-8 py-10 text-center">
+      {#if errorMessage}
+        <div class="flex flex-col items-center gap-3">
+          <Icon class="text-4xl text-red-600" icon="material-symbols:error-outline" />
+          <h3 class="text-lg font-bold text-red-600">
+            Error when uploading files: {errorMessage}
+          </h3>
+          <p class="text-50 text-sm">Please reach out to the administrator if this error continues to occur.</p>
+        </div>
+      {:else}
+        <div class="flex flex-col items-center gap-4">
+          <Icon
+            class="text-4xl text-[var(--primary)]"
+            icon="line-md:loading-loop"
+            aria-label="loading"
+          />
+          <h3 class="text-xl font-heading font-bold text-90">
+            Requesting descriptions...
+          </h3>
+          <p class="text-50 text-sm">This may take a moment. Please wait.</p>
+        </div>
+      {/if}
+    </div>
   {:else}
     {#if files.length > 0}
-      <div class="flex items-center gap-4">
-        <form onsubmit={submit} id="post-files" class="flex flex-row gap-4">
-          <button
-            class="btn-regular rounded-lg active:scale-90 py-3 px-6 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            type="submit"
-            disabled={creditsRemaining !== undefined && files.length * creditCosts.describe > creditsRemaining}
-          >
-            Describe <Icon
-              class="text-[1.50rem]"
-              icon="material-symbols:upload"
-            />
-          </button>
-          <button
-            class="btn-regular rounded-lg active:scale-90 py-3 px-6 cursor-pointer"
-            type="button"
-            onclick={removeAllImages}
-          >
-            Delete & start over <Icon class="text-[1.50rem]" icon="mdi:garbage" />
-          </button>
-        </form>
+      <div class="card-base rounded-xl px-6 py-4">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <div class="flex items-center gap-3">
+            <span class="text-50 text-sm">
+              {files.length} {files.length === 1 ? "file" : "files"} selected
+            </span>
+            <span class="text-30 text-sm">|</span>
+            <span class="text-50 text-sm">
+              Cost: <span class="font-bold text-75">{totalCost}</span> credits
+            </span>
+            {#if creditsRemaining !== undefined}
+              <span class="text-50 text-sm">
+                Balance: <span class="font-bold text-75">{creditsRemaining}</span> credits
+              </span>
+            {/if}
+          </div>
+          <form onsubmit={submit} id="post-files" class="flex flex-row gap-3">
+            <button
+              class="btn-regular rounded-lg active:scale-90 py-2.5 px-5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
+              type="submit"
+              disabled={insufficientCredits}
+            >
+              <Icon icon="material-symbols:auto-awesome" class="text-lg" />
+              Describe
+            </button>
+            <button
+              class="rounded-lg active:scale-90 py-2.5 px-4 cursor-pointer flex items-center gap-2 transition-all border border-[var(--border)] text-75 hover:bg-[var(--btn-plain-bg-hover)]"
+              type="button"
+              onclick={removeAllImages}
+            >
+              <Icon icon="mdi:garbage" class="text-lg" />
+              Clear
+            </button>
+          </form>
+        </div>
+        {#if insufficientCredits}
+          <p class="text-red-600 text-sm mt-3 flex items-center gap-2">
+            <Icon icon="material-symbols:warning-outline" class="text-base" />
+            Describing {files.length} images costs {totalCost} credits, but you only have {creditsRemaining}.
+            Remove {needToRemove} {needToRemove === 1 ? "image" : "images"} to continue.
+          </p>
+        {/if}
       </div>
-      {#if creditsRemaining !== undefined && files.length * creditCosts.describe > creditsRemaining}
-        <p class="text-red-600 text-sm">
-          Describing {files.length} images costs {files.length * creditCosts.describe} credits, but you only have {creditsRemaining}.
-          Remove {Math.ceil((files.length * creditCosts.describe - creditsRemaining) / creditCosts.describe)} images to continue.
-        </p>
-      {/if}
     {:else}
       {#if creditsRemaining !== undefined && creditsRemaining <= 0}
-        <p class="text-75">You don't have enough credits to upload more images.</p>
+        <div class="card-base rounded-xl px-8 py-12 text-center">
+          <Icon class="text-4xl text-30 mx-auto" icon="material-symbols:credit-card-off-outline" />
+          <p class="text-75 mt-3">You don't have enough credits to upload more images.</p>
+        </div>
       {:else}
-        <div class="w-fit">
-          <UploadButton
-            {uploader}
-            config={{ cn: twMerge }}
-            appearance={{
-              button:
-                "min-w-48 !btn-regular ut-ready:bg-[var(--btn-regular-bg)] ut-ready:hover:bg-[var(--btn-regular-bg-hover)] ut-ready:active:bg-[var(--btn-regular-bg-active)] rounded-lg active:scale-90 py-3 px-4 cursor-pointer grow hide-input-for-uploadthing focus-within:!ring-0 data-[state=uploading]:after:bg-[var(--btn-regular-bg-hover)]",
-              container: "text-75",
-            }}
-          ></UploadButton>
+        <div class="card-base rounded-xl border-2 border-dashed border-[var(--border)] px-8 py-14 text-center transition-colors hover:border-[var(--primary)]/40 group">
+          <div class="flex flex-col items-center gap-3">
+            <Icon class="text-4xl text-30 group-hover:text-[var(--primary)]/60 transition-colors" icon="material-symbols:cloud-upload-outline" />
+            <p class="text-75 font-heading font-semibold">Upload your images</p>
+            <p class="text-50 text-sm max-w-md mx-auto">
+              Drag and drop or click to browse. Images will be optimized automatically.
+            </p>
+            <div class="mt-2">
+              <UploadButton
+                {uploader}
+                config={{ cn: twMerge }}
+                appearance={{
+                  button:
+                    "!btn-regular ut-ready:bg-[var(--btn-regular-bg)] ut-ready:hover:bg-[var(--btn-regular-bg-hover)] ut-ready:active:bg-[var(--btn-regular-bg-active)] rounded-lg active:scale-90 py-3 px-6 cursor-pointer hide-input-for-uploadthing focus-within:!ring-0 data-[state=uploading]:after:bg-[var(--btn-regular-bg-hover)]",
+                  container: "text-75",
+                }}
+              ></UploadButton>
+            </div>
+          </div>
         </div>
       {/if}
     {/if}
@@ -190,49 +236,56 @@
     {/if}
 
     {#if files.length > 0}
-      <h3 class="font-black text-2xl text-90">Selected Files</h3>
-    {:else}
-      <h3 class="text-75">
-        After selecting files, they will appear here. You can remove unwanted
-        images by clicking them.
-      </h3>
-    {/if}
-    <section class="text-75 grid grid-cols-2 md:grid-cols-4 gap-4">
-      {#each files as image (image.key)}
-        <div transition:fade={{ duration: 300 }}>
-          <button
-            class="group relative h-auto w-full overflow-hidden rounded-lg cursor-pointer"
-            type="button"
-            onclick={() => removeImage(image.key)}
+      <div class="flex items-center justify-between">
+        <h3 class="font-heading font-bold text-xl text-90">Selected Files</h3>
+        <p class="text-50 text-xs">Click an image to remove it</p>
+      </div>
+      <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {#each files as image, i (image.key)}
+          <div
+            transition:fly={{ y: 20, duration: 300, delay: i * 60 }}
           >
-            <ImageWithLoading
-              description={{
-                file_id: image.key,
-                title: image.name,
-                width: image.width,
-                height: image.height,
-              }}
-              appId={UPLOADTHING_APP_ID}
-            />
-            <div
-              class="absolute inset-0 w-full h-full bg-transparent group-hover:bg-black/70 transition duration-300 z-10 text-white flex justify-center items-center"
+            <button
+              class="group relative w-full overflow-hidden rounded-xl cursor-pointer bg-[var(--card-bg)]"
+              type="button"
+              onclick={() => removeImage(image.key)}
             >
-              <Icon
-                class="text-[4rem] opacity-0 group-hover:opacity-100 transition duration-300 scale-50 group-hover:scale-100"
-                icon="material-symbols:delete"
+              <ImageWithLoading
+                description={{
+                  file_id: image.key,
+                  title: image.name,
+                  width: image.width,
+                  height: image.height,
+                }}
+                appId={UPLOADTHING_APP_ID}
               />
+              <div
+                class="absolute inset-0 bg-transparent group-hover:bg-black/70 transition-all duration-300 z-10 flex items-center justify-center"
+              >
+                <Icon
+                  class="text-4xl opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100 text-white"
+                  icon="material-symbols:delete"
+                />
+              </div>
+            </button>
+            <div class="px-1.5 pt-2">
+              <p class="truncate font-medium text-sm text-75">{image.name}</p>
+              <p class="text-50 text-sm">
+                {image.size > 1048576
+                  ? (image.size / 1048576).toFixed(2) + " MB"
+                  : (image.size / 1024).toFixed(0) + " KB"}
+              </p>
             </div>
-          </button>
-          <p class="w-64 truncate font-bold text-sm px-2">{image.name}</p>
-          <p class="text-50 text-xs px-2">
-            {image.size > 1048576
-              ? (image.size / 1048576).toFixed(2) + " MB"
-              : (image.size / 1024).toFixed(0) + " KB"}
-          </p>
-        </div>
-      {/each}
-    </section>
+          </div>
+        {/each}
+      </section>
+    {:else}
+      <p class="text-50 text-sm italic">
+        After selecting files, they will appear here. You can remove unwanted images by clicking them.
+      </p>
+    {/if}
   {/if}
 </div>
+
 <!-- Tailwind classes that are used by upload thing and must be added to the bundle -->
 <!-- block h-5 w-5 animate-spin align-middle text-white relative z-50 -->

@@ -1,11 +1,15 @@
 import { inngest } from "./client";
 import { zodTextFormat } from "openai/helpers/zod";
-import { batchSchema, descriptionSchema } from "@/inngest/types";
+import { batchSchema, descriptionSchema, type DescribeEventPayload } from "@/inngest/types";
 import { db, type DescriptionUpdate } from "@utils/db";
 import { openai } from "@utils/ai";
 import { AI_MODEL } from "@/constants/ai";
 import { UPLOADTHING_APP_ID } from "astro:env/client";
 import { getBatchSuccessCount, getBatchTitles } from "@utils/utils.db";
+
+const describePrompt = "You are a photography and SEO expert. You must generate 100 short, relevant keywords for an uploaded image. Use 100 popular and descriptive keywords that help rank the image higher in stock websites. In addition, create a compelling title and a long description that suit the image well";
+
+const batchTitlePrompt = "You are a newspaper writer who is an expert at their job. You are given a collection of image titles. Your task is to create a compelling title that suits the collection of these images well";
 
 export default inngest.createFunction(
   {
@@ -14,6 +18,7 @@ export default inngest.createFunction(
     triggers: [{ event: "keyworder/image.describe" }],
   },
   async ({ event, step }) => {
+    const payload = event.data as unknown as DescribeEventPayload;
     const parseResponse = openai.responses.parse.bind(openai.responses);
 
     const response = await step.ai.wrap(
@@ -27,11 +32,11 @@ export default inngest.createFunction(
             content: [
               {
                 type: "input_text",
-                text: "You are a photography and SEO expert. You must generate 100 short, relevant keywords for an uploaded image. Use 100 popular and descriptive keywords that help rank the image higher in stock websites. In addition, create a compelling title and a long description that suit the image well",
+                text: describePrompt,
               },
               {
                 type: "input_image",
-                image_url: `https://${UPLOADTHING_APP_ID}.ufs.sh/f/${event.data.fileId}`,
+                image_url: `https://${UPLOADTHING_APP_ID}.ufs.sh/f/${payload.fileId}`,
                 detail: "low",
               },
             ],
@@ -44,47 +49,88 @@ export default inngest.createFunction(
     );
 
     const output = await step.run("image.save", async () => {
-      const description = descriptionSchema.safeParse(response.output_parsed);
+      return db.transaction().execute(async (trx) => {
+        const user = await trx
+          .withSchema("keyworder")
+          .selectFrom("user")
+          .select("credits")
+          .where("id", "=", payload.userId)
+          .forUpdate()
+          .executeTakeFirst();
 
-      const descriptionUpdate: DescriptionUpdate = {
-        tokens_used: response.usage?.total_tokens,
-        result: "fail",
-      };
+        if (!user || user.credits < payload.cost) {
+          throw new Error("Insufficient credits");
+        }
 
-      if (description.success) {
-        descriptionUpdate.description = description.data.description;
-        descriptionUpdate.title = description.data.title;
-        descriptionUpdate.keywords = description.data.keywords;
-        descriptionUpdate.result = "success";
-      }
-
-      const record = await db.withSchema("keyworder").updateTable("description")
-        .set(descriptionUpdate)
-        .where("id", "=", event.data.descriptionId)
-        .returningAll()
-        .executeTakeFirstOrThrow();
-
-      const { successCount, totalCount } = await getBatchSuccessCount(record.batch_id)
-        .where("user_id", "=", record.user_id)
-        .executeTakeFirstOrThrow();
-
-      let titles: { title: string | null }[] | null = null;
-      if (successCount === totalCount) {
-        titles = await getBatchTitles(record.batch_id)
-          .where("user_id", "=", record.user_id)
+        await trx
+          .withSchema("keyworder")
+          .updateTable("user")
+          .set(eb => ({
+            credits: eb("credits", "-", payload.cost),
+          }))
+          .where("id", "=", payload.userId)
           .execute();
-      }
 
-      return {
-        description: record,
-        successCount,
-        totalCount,
-        titles,
-      };
+        await trx
+          .withSchema("keyworder")
+          .insertInto("credit_audit")
+          .values({
+            user_id: payload.userId,
+            amount: -payload.cost,
+            action: payload.mode === "regenerate" ? "regenerate" : "describe",
+            metadata: { fileId: payload.fileId, descriptionId: payload.descriptionId },
+          })
+          .execute();
+
+        const parsed = descriptionSchema.safeParse(response.output_parsed);
+
+        const descriptionUpdate: DescriptionUpdate = {
+          tokens_used: response.usage?.total_tokens,
+          result: "fail",
+        };
+
+        if (parsed.success) {
+          descriptionUpdate.description = parsed.data.description;
+          descriptionUpdate.title = parsed.data.title;
+          descriptionUpdate.keywords = parsed.data.keywords;
+          descriptionUpdate.result = "success";
+        }
+
+        const record = await trx
+          .withSchema("keyworder")
+          .updateTable("description")
+          .set(descriptionUpdate)
+          .where("id", "=", payload.descriptionId)
+          .returningAll()
+          .executeTakeFirstOrThrow();
+
+        if (payload.mode === "generate") {
+          const { successCount, totalCount } = await getBatchSuccessCount(record.batch_id)
+            .where("user_id", "=", record.user_id)
+            .executeTakeFirstOrThrow();
+
+          let titles: { title: string | null }[] | null = null;
+          if (successCount === totalCount) {
+            titles = await getBatchTitles(record.batch_id)
+              .where("user_id", "=", record.user_id)
+              .execute();
+          }
+
+          return {
+            description: record,
+            successCount,
+            totalCount,
+            titles,
+            allComplete: successCount === totalCount,
+          };
+        }
+
+        return { description: record, successCount: 0, totalCount: 0, titles: null, allComplete: false };
+      });
     });
 
-    if (output.successCount === output.totalCount && output.titles) {
-      const createTitleResponse = await step.ai.wrap(
+    if (output.allComplete && output.titles) {
+      const titleResponse = await step.ai.wrap(
         "openai.wrap.batch.title",
         parseResponse,
         {
@@ -95,7 +141,7 @@ export default inngest.createFunction(
               content: [
                 {
                   type: "input_text",
-                  text: "You are a newspaper writer who is an expert at their job. You are given a collection of image titles. Your task is to create a compelling title that suits the collection of these images well",
+                  text: batchTitlePrompt,
                 },
                 {
                   type: "input_text",
@@ -111,7 +157,7 @@ export default inngest.createFunction(
       );
 
       await step.run("batch.complete", async () => {
-        const batchTitle = batchSchema.safeParse(createTitleResponse.output_parsed);
+        const batchTitle = batchSchema.safeParse(titleResponse.output_parsed);
 
         if (batchTitle.success) {
           await db.withSchema("keyworder").insertInto("batch")
@@ -122,7 +168,7 @@ export default inngest.createFunction(
             .executeTakeFirst()
             .catch((e) => {
               if (e.code === "23505") {
-                console.error(`Batch ${output.description.batch_id} already exists ant its title cannot be created`);
+                console.error(`Batch ${output.description.batch_id} already exists and its title cannot be created`);
                 return;
               }
               throw e;

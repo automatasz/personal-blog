@@ -1,7 +1,8 @@
 import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { inngest } from "@/inngest";
-import { checkIfSignedInAndGetUserId, deductCredits, getCreditCosts } from "@utils/actions";
+import { checkIfSignedInAndGetUserId } from "@utils/actions";
+import { CREDIT_COST_DESCRIBE } from "@/constants/credit-costs";
 import { db } from "@utils/db";
 import { uploadthing } from "@utils/storage";
 
@@ -31,7 +32,7 @@ export const postFileIds = defineAction({
       .execute();
 
     const events = record.map((description) => {
-      return sendEvent(description.file_id, description.id);
+      return sendEvent(description.file_id, description.id, userId);
     });
 
     try {
@@ -47,22 +48,19 @@ export const postFileIds = defineAction({
       throw new Error("Failed to start creating descriptions");
     }
 
-    const costs = await getCreditCosts();
-    await deductCredits(userId, input.files.length * costs.describe, "describe", {
-      batchId,
-      imageCount: input.files.length,
-    });
-
     return batchId;
   },
 });
 
-async function sendEvent(fileId: string, descriptionId: string) {
+async function sendEvent(fileId: string, descriptionId: string, userId: string) {
   return inngest.send({
     name: "keyworder/image.describe",
     data: {
       fileId,
       descriptionId,
+      userId,
+      cost: CREDIT_COST_DESCRIBE,
+      mode: "generate",
     },
   });
 }

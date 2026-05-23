@@ -1,5 +1,4 @@
 <script lang="ts">
-  import BatchList from "./BatchList.svelte";
   import ImageUploader from "./ImageUploader.svelte";
   import UserSessionCard from "./UserSessionCard.svelte";
   import { authClient } from "@utils/auth-client";
@@ -8,8 +7,9 @@
 </script>
 
 {#if !$session.data}
-  <UserSessionCard />
+  <div class="text-center py-8">
+    <UserSessionCard />
+  </div>
 {:else}
   <ImageUploader />
-  <BatchList />
 {/if}

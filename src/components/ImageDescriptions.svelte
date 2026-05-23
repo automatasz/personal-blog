@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Description } from "@utils/db";
   import { onDestroy, onMount } from "svelte";
+  import { slide } from "svelte/transition";
   import { actions } from "astro:actions";
   import ImageWithLoading from "./ImageWithLoading.svelte";
   import PhotoSwipeLightbox from "photoswipe/lightbox";
@@ -10,7 +11,6 @@
   let { appId }: { appId: string } = $props();
   let descriptions: Description[] | undefined = $state(undefined);
   let batchId: string | null = $state(null);
-  let attempts: number = $state(0);
   let errorMessage: string | undefined = $state(undefined);
   let timeoutId: number | undefined = $state(undefined);
   let expandedKeywords: { [key: string]: boolean } = $state({});
@@ -67,42 +67,37 @@
         throw error;
       }
 
-      if (
-        data.descriptions.length > 0 &&
-        data.descriptions.every((image) => image.result || image.description)
-      ) {
-        descriptions = data.descriptions;
-        setTimeout(initLightbox, 0);
-      } else {
-        fetchEventsComplete(id);
-      }
-
+      descriptions = data.descriptions;
       batch = data.batch;
+
+      if (data.descriptions.some((image) => !image.result)) {
+        pollBatchComplete(id);
+      } else {
+        setTimeout(initLightbox, 0);
+      }
     });
   }
 
-  function fetchEventsComplete(id: string) {
-    actions.checkEventComplete({ batchId: id }).then(({ data, error }) => {
-      if (error) {
-        errorMessage = error.message;
-        throw error;
-      }
+  function pollBatchComplete(id: string) {
+    let attempts = 0;
 
-      if (data.complete) {
-        fetchBatch(id);
-      } else if (attempts < 5) {
-        timeoutId = setTimeout(
-          () => fetchEventsComplete(id),
-          5000,
-        ) as unknown as number;
-        attempts++;
-      } else {
-        const message =
-          "Image descriptions do not exist under such ID or too many attempts have been made at retrieving descriptions, try again later";
-        errorMessage = message;
-        throw new Error(message);
-      }
-    });
+    function tick() {
+      actions.getBatch({ batchId: id }).then(({ error, data }) => {
+        if (error) return;
+
+        descriptions = data.descriptions;
+        batch = data.batch;
+
+        if (data.descriptions.every((image) => image.result)) {
+          setTimeout(initLightbox, 0);
+          return;
+        }
+
+        if (attempts++ < 5) timeoutId = setTimeout(tick, 5000) as unknown as number;
+      });
+    }
+
+    tick();
   }
 
   onDestroy(() => {
@@ -113,6 +108,24 @@
       lightbox.destroy();
     }
   });
+
+  function pollRegenerate(id: string, descId: string) {
+    let attempts = 0;
+
+    function tick() {
+      actions.getBatch({ batchId: id }).then(({ data, error }) => {
+        if (error) return;
+
+        descriptions = data.descriptions;
+
+        const updated = data.descriptions.find(d => d.id === descId);
+        if (updated?.result === "success" || updated?.result === "fail") return;
+        if (attempts++ < 5) setTimeout(tick, 5000);
+      });
+    }
+
+    tick();
+  }
 
   function downloadAsAdobeStockCSV() {
     if (!descriptions) return;
@@ -223,165 +236,196 @@
       return;
     }
 
-    // Refresh data
+    // Refresh data asynchronously
     if (batchId) {
-      fetchBatch(batchId);
+      pollRegenerate(batchId, descriptionId);
     }
   }
 </script>
 
-<section class="text-75 divide-y-2 space-y-4 mt-2">
+<section class="text-75 mt-6">
   {#if batch}
-    <div class="flex items-center justify-between">
-      <h1 class="text-90 text-4xl font-black">{batch.title}</h1>
+    <div class="flex items-center justify-between mb-8 sticky top-0 z-20 bg-[var(--card-bg)] -mx-9 px-9 py-4">
+      <h1 class="text-90 text-2xl font-heading font-black tracking-tight">{batch.title}</h1>
       {#if descriptions && descriptions.length > 0}
         <button
-          class="btn-regular active:scale-90 text-base px-4 py-3 rounded-lg flex items-center gap-2 hover:bg-100 transition-colors"
+          class="btn-regular active:scale-90 text-sm px-4 py-2.5 rounded-lg flex items-center gap-2 transition-all"
           onclick={downloadAsAdobeStockCSV}
           title="Download as Adobe Stock CSV"
         >
-          <Icon icon="lucide:download" class="text-base" />
-          Adobe Stock CSV
+          <Icon icon="lucide:download" class="text-sm" />
+          Export CSV
         </button>
       {/if}
     </div>
   {/if}
   {#if errorMessage}
-    <p class="text-red-600">
-      Error when displaying image descriptions: {errorMessage}.
-    </p>
+    <div class="card-base rounded-xl px-6 py-4 text-red-600 flex items-center gap-2">
+      <Icon icon="material-symbols:error-outline" class="text-lg" />
+      <span>Error when displaying image descriptions: {errorMessage}.</span>
+    </div>
   {:else if !descriptions}
-    <Icon
-      class="text-[1.50rem]"
-      icon="line-md:loading-loop"
-      aria-label="loading"
-    />
+    <div class="flex justify-center py-12">
+      <Icon
+        class="text-3xl text-[var(--primary)]"
+        icon="line-md:loading-loop"
+        aria-label="loading"
+      />
+    </div>
   {/if}
 
   {#if descriptions}
-    <div class="pswp-gallery pt-4" id="batch-gallery">
+    <div class="pswp-gallery space-y-5" id="batch-gallery">
       {#each descriptions as description (description.id)}
-        <div class="grid md:grid-cols-[300px_1fr] gap-4 pt-4">
-          <div class="p-1">
-            <a
-              class="group relative h-auto w-full overflow-hidden rounded-lg cursor-zoom-in block"
-              href={getImageSrc(description)}
-              data-pswp-width={description.width || 800}
-              data-pswp-height={description.height || 600}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <ImageWithLoading {description} {appId} />
-            </a>
-          </div>
-          <div class="lg:col-span-2 p-1">
-            {#if editingId === description.id}
-              <!-- Edit Mode -->
-              <div class="space-y-3">
+        <div class="card-base rounded-xl overflow-hidden transition-shadow duration-300">
+          {#if editingId === description.id}
+            <!-- Edit Mode -->
+            <div class="p-6" transition:slide>
+              <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-bold mb-1" for="edit-title">Title</label>
+                  <label class="block text-sm font-semibold mb-1.5 text-50" for="edit-title">Title</label>
                   <input
                     id="edit-title"
                     type="text"
-                    class="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-75"
+                    class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-75 text-sm"
                     bind:value={editTitle}
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-bold mb-1" for="edit-desc">Description</label>
+                  <label class="block text-sm font-semibold mb-1.5 text-50" for="edit-desc">Description</label>
                   <textarea
                     id="edit-desc"
-                    class="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-75 h-24"
+                    class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-75 text-sm h-24"
                     bind:value={editDescription}
                   ></textarea>
                 </div>
                 <div>
-                  <label class="block text-sm font-bold mb-1" for="edit-keywords">Keywords (comma-separated)</label>
-                  <input
+                  <label class="block text-sm font-semibold mb-1.5 text-50" for="edit-keywords">Keywords (comma-separated)</label>
+                  <textarea
                     id="edit-keywords"
-                    type="text"
-                    class="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-75"
+                    class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] text-75 text-sm h-28"
                     bind:value={editKeywords}
-                  />
+                  ></textarea>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-2 pt-1">
                   <button
-                    class="btn-regular active:scale-90 text-base px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-100 transition-colors disabled:opacity-50"
+                    class="btn-regular active:scale-90 text-sm px-5 py-2 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
                     onclick={() => saveEditing(description.id)}
                     disabled={isSaving}
                   >
-                    <Icon icon="lucide:save" class="text-base" />
+                    <Icon icon="lucide:save" class="text-sm" />
                     {isSaving ? "Saving..." : "Save"}
                   </button>
                   <button
-                    class="btn-regular active:scale-90 text-base px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-100 transition-colors"
+                    class="btn-ghost active:scale-90 text-sm px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
                     onclick={cancelEditing}
                   >
-                    <Icon icon="lucide:x" class="text-base" />
+                    <Icon icon="lucide:x" class="text-sm" />
                     Cancel
                   </button>
                 </div>
               </div>
-            {:else}
-              <!-- View Mode -->
-              <div class="flex items-start justify-between">
-                <h3 class="font-black text-xl">{description.title}</h3>
-                <div class="flex gap-1">
-                  <button
-                    class="btn-regular active:scale-90 p-2 rounded-lg hover:bg-100 transition-colors"
-                    onclick={() => startEditing(description)}
-                    title="Edit"
-                  >
-                    <Icon icon="lucide:pencil" class="text-sm" />
-                  </button>
-                  <button
-                    class="btn-regular active:scale-90 p-2 rounded-lg hover:bg-100 transition-colors"
-                    onclick={() => regenerate(description.id)}
-                    title="Regenerate"
-                  >
-                    <Icon icon="lucide:refresh-cw" class="text-sm" />
-                  </button>
-                </div>
+            </div>
+          {:else}
+            <!-- View Mode -->
+            <div class="grid md:grid-cols-[minmax(280px,1fr)_420px] gap-0">
+              <!-- Image -->
+              <div class="p-3">
+                <a
+                  class="group relative overflow-hidden rounded-lg cursor-zoom-in block max-h-[50vh]"
+                  href={getImageSrc(description)}
+                  data-pswp-width={description.width || 800}
+                  data-pswp-height={description.height || 600}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ImageWithLoading {description} {appId} />
+                </a>
               </div>
-              <p class="text-sm text-50">{description.file_name}</p>
-              {#if description.result !== "success"}
-                <p class="text-sm text-red-600">
-                  The image description failed. Please try again and make sure the
-                  image does not contain content that breaks the Terms of Service.
-                </p>
-              {/if}
-              <p class="my-2">{description.description}</p>
-              {#if description.keywords}
-                <div class="flex gap-2 flex-wrap items-center">
-                  {#each description.keywords.slice(0, expandedKeywords[description.id] ? undefined : 10) as keyword, index (index)}
-                    <span class="btn-regular h-8 text-sm px-3 rounded-lg"
-                      >{keyword}</span
+              <!-- Meta -->
+              <div class="p-5 flex flex-col">
+                <div class="flex items-start justify-between gap-2">
+                  {#if description.title}
+                    <h3 class="font-heading font-bold text-base text-90 leading-snug">{description.title}</h3>
+                  {:else}
+                    <div class="skeleton-text w-48 h-5 rounded"></div>
+                  {/if}
+                  <div class="flex gap-1 shrink-0 pt-0.5">
+                    <button
+                      class="btn-ghost active:scale-90 p-1.5 rounded-lg transition-colors"
+                      onclick={() => startEditing(description)}
+                      title="Edit"
                     >
+                      <Icon icon="lucide:pencil" class="text-sm" />
+                    </button>
+                    <button
+                      class="btn-ghost active:scale-90 p-1.5 rounded-lg transition-colors"
+                      onclick={() => regenerate(description.id)}
+                      title="Regenerate"
+                    >
+                      <Icon icon="lucide:refresh-cw" class="text-sm" />
+                    </button>
+                  </div>
+                </div>
+                <p class="text-xs text-50 mt-1">{description.file_name}</p>
+                {#if description.result === "fail"}
+                  <p class="text-xs text-red-600 mt-2 flex items-center gap-1">
+                    <Icon icon="material-symbols:warning-outline" class="text-xs" />
+                    Description failed. Try again.
+                  </p>
+                {:else if !description.result}
+                  <div class="mt-3 space-y-2">
+                    <div class="skeleton-text w-full h-4 rounded"></div>
+                    <div class="skeleton-text w-3/4 h-4 rounded"></div>
+                    <div class="skeleton-text w-1/2 h-4 rounded"></div>
+                  </div>
+                {:else}
+                  <p class="text-sm text-75 mt-3 leading-relaxed">{description.description}</p>
+                {/if}
+              </div>
+            </div>
+            <!-- Keywords -->
+            {#if description.keywords}
+              <div class="px-5 pb-5">
+                <div class="flex gap-1.5 flex-wrap items-center">
+                  {#each description.keywords.slice(0, 10) as keyword, index (index)}
+                    <span
+                      class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-[var(--primary)]/10 text-[var(--primary)]"
+                    >{keyword}</span>
                   {/each}
+                  {#if expandedKeywords[description.id] && description.keywords.length > 10}
+                    <div transition:slide class="w-full flex gap-1.5 flex-wrap">
+                      {#each description.keywords.slice(10) as keyword, index (index)}
+                        <span
+                          class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-[var(--primary)]/10 text-[var(--primary)]"
+                        >{keyword}</span>
+                      {/each}
+                    </div>
+                  {/if}
                   {#if description.keywords.length > 10}
                     <button
-                      class="btn-regular active:scale-90 h-8 text-sm px-3 rounded-lg flex items-center gap-1 hover:bg-100 transition-colors"
+                      class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium btn-ghost active:scale-90 transition-colors gap-0.5"
                       onclick={() => expandedKeywords[description.id] = !expandedKeywords[description.id]}
                     >
-                      <Icon icon={expandedKeywords[description.id] ? "lucide:chevron-up" : "lucide:chevron-down"} class="text-sm" />
-                      {expandedKeywords[description.id] ? "Show less" : "Show more (" + (description.keywords.length - 10) + ")"}
+                      <Icon icon={expandedKeywords[description.id] ? "lucide:chevron-up" : "lucide:chevron-down"} class="text-xs" />
+                      {expandedKeywords[description.id] ? "Fewer" : "+" + (description.keywords.length - 10)}
                     </button>
                   {/if}
                 </div>
                 <button
-                  class="mt-4 btn-regular active:scale-90 text-base px-4 py-3 rounded-lg flex items-center gap-1 hover:bg-100 transition-colors"
+                  class="mt-2.5 btn-ghost active:scale-90 text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
                   onclick={() =>
                     navigator.clipboard.writeText(
                       description.keywords?.join(", ") || "",
                     )}
                   title="Copy keywords to clipboard"
                 >
-                  <Icon icon="lucide:copy" class="text-base" />
+                  <Icon icon="lucide:copy" class="text-xs" />
                   Copy
                 </button>
-              {/if}
+              </div>
             {/if}
-          </div>
+          {/if}
         </div>
       {/each}
     </div>

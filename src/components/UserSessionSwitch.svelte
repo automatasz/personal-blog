@@ -43,7 +43,7 @@
     </div>
   </button>
 
-  <div id="my-account-panel" class="hidden lg:block float-panel-closed absolute transition top-11 -right-2 pt-5">
+  <div id="my-account-panel" class="float-panel-closed absolute transition top-11 -right-2 pt-5">
     <div class="card-base float-panel p-2">
       <button
         aria-label="Sign In or Sign Out"
