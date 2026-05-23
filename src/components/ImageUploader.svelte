@@ -12,7 +12,6 @@
   import { twMerge } from "tailwind-merge";
   import ImageWithLoading from "./ImageWithLoading.svelte";
   import { UPLOADTHING_APP_ID } from "astro:env/client";
-  import { CREDIT_COST_UPLOAD, CREDIT_COST_DESCRIBE } from "@/constants/credit-costs";
 
   type FileForUpload = {
     key: string;
@@ -27,11 +26,18 @@
   let errorMessage: string | undefined = $state(undefined);
   let files: FileForUpload[] = $state([]);
   let creditsRemaining: number | undefined = $state(undefined);
+  let creditCosts = $state({ upload: 1, describe: 7 });
 
   onMount(() => {
     actions.getStats(null).then(({ data }) => {
       if (data) {
         creditsRemaining = data.creditsRemaining;
+        if (data.creditCosts) {
+          creditCosts = {
+            upload: data.creditCosts.upload,
+            describe: data.creditCosts.describe,
+          };
+        }
       }
     });
   });
@@ -40,6 +46,12 @@
     actions.getStats(null).then(({ data }) => {
       if (data) {
         creditsRemaining = data.creditsRemaining;
+        if (data.creditCosts) {
+          creditCosts = {
+            upload: data.creditCosts.upload,
+            describe: data.creditCosts.describe,
+          };
+        }
       }
     });
   }
@@ -107,13 +119,13 @@
     navigate(`/batch?id=${data}`);
   }
 
-  let totalCost = $derived(files.length * CREDIT_COST_DESCRIBE);
+  let totalCost = $derived(files.length * creditCosts.describe);
   let insufficientCredits = $derived(
     creditsRemaining !== undefined && totalCost > creditsRemaining
   );
   let needToRemove = $derived(
     insufficientCredits
-      ? Math.ceil((totalCost - creditsRemaining!) / CREDIT_COST_DESCRIBE)
+      ? Math.ceil((totalCost - creditsRemaining!) / creditCosts.describe)
       : 0
   );
 </script>
@@ -218,12 +230,10 @@
       {/if}
     {/if}
 
-    <div class="flex items-center justify-between text-50 text-sm">
-      <span>{CREDIT_COST_UPLOAD} credit per upload + {CREDIT_COST_DESCRIBE} credits per description</span>
-      {#if creditsRemaining !== undefined}
-        <span class="font-bold text-75">Credits remaining: {creditsRemaining}</span>
-      {/if}
-    </div>
+    <p class="text-50 text-sm">{creditCosts.upload} credit per upload + {creditCosts.describe} credits per description</p>
+    {#if creditsRemaining !== undefined}
+      <p class="text-75 text-sm font-bold">Credits remaining: {creditsRemaining}</p>
+    {/if}
 
     {#if files.length > 0}
       <div class="flex items-center justify-between">
