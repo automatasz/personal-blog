@@ -7,7 +7,6 @@ export const getBatches = defineAction({
   handler: async (_input, context) => {
     const userId = await checkIfSignedInAndGetUserId(context.request.headers);
     return db
-      .withSchema("keyworder")
       .selectFrom("description")
       .leftJoin("batch", "batch.id", "description.batch_id")
       .select([

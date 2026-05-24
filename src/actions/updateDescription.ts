@@ -18,14 +18,14 @@ export const updateDescription = defineAction({
     const updateData: {
       title?: string | null;
       description?: string | null;
-      keywords?: string[] | null;
+      keywords?: string | null;
     } = {};
 
     if (input.title !== undefined) updateData.title = input.title;
     if (input.description !== undefined) updateData.description = input.description;
-    if (input.keywords !== undefined) updateData.keywords = input.keywords;
+    if (input.keywords !== undefined) updateData.keywords = JSON.stringify(input.keywords);
 
-    const result = await db.withSchema("keyworder").updateTable("description")
+    const result = await db.updateTable("description")
       .set(updateData)
       .where("id", "=", input.descriptionId)
       .where("user_id", "=", userId)
@@ -49,7 +49,7 @@ export const regenerateDescription = defineAction({
   handler: async (input, context) => {
     const userId = await checkIfSignedInAndGetUserId(context.request.headers);
 
-    const record = await db.withSchema("keyworder").selectFrom("description")
+    const record = await db.selectFrom("description")
       .select(["file_id", "user_id"])
       .where("id", "=", input.descriptionId)
       .where("user_id", "=", userId)

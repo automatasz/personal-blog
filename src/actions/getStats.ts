@@ -7,7 +7,6 @@ export const getStats = defineAction({
     const userId = await checkIfSignedInAndGetUserId(context.request.headers);
 
     const { batchCount } = await db
-      .withSchema("keyworder")
       .selectFrom("description")
       .select(({ fn }) => [
         fn.count<number>("batch_id").distinct().as("batchCount"),
@@ -16,7 +15,6 @@ export const getStats = defineAction({
       .executeTakeFirstOrThrow();
 
     const { imageCount } = await db
-      .withSchema("keyworder")
       .selectFrom("description")
       .select(({ fn }) => [
         fn.count<number>("file_id").as("imageCount"),
@@ -25,7 +23,6 @@ export const getStats = defineAction({
       .executeTakeFirstOrThrow();
 
     const { tokenSum } = await db
-      .withSchema("keyworder")
       .selectFrom("description")
       .select(({ fn }) => [
         fn.sum<number>("tokens_used").as("tokenSum"),
@@ -34,7 +31,6 @@ export const getStats = defineAction({
       .executeTakeFirstOrThrow();
 
     const user = await db
-      .withSchema("keyworder")
       .selectFrom("user")
       .select("credits")
       .where("id", "=", userId)

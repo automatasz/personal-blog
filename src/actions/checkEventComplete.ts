@@ -2,6 +2,7 @@ import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { checkIfSignedInAndGetUserId } from "@utils/actions";
 import { db } from "@utils/db";
+import { sql } from "kysely";
 
 export const checkEventComplete = defineAction({
   accept: "json",
@@ -11,10 +12,9 @@ export const checkEventComplete = defineAction({
   handler: async (input, context) => {
     const userId = await checkIfSignedInAndGetUserId(context.request.headers);
     const { successCount, totalCount } = await db
-      .withSchema("keyworder")
       .selectFrom("description")
       .select(({ fn }) => [
-        fn.count<number>("result").filterWhere("result", "is not", null).as("successCount"),
+        fn.count<number>(sql<string>`CASE WHEN "result" IS NOT NULL THEN 1 END`).as("successCount"),
         fn.count<number>("id").as("totalCount"),
       ])
       .where("batch_id", "=", input.batchId)

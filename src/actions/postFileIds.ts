@@ -19,8 +19,9 @@ export const postFileIds = defineAction({
     const userId = await checkIfSignedInAndGetUserId(context.request.headers);
     const batchId = crypto.randomUUID();
 
-    const record = await db.withSchema("keyworder").insertInto("description")
+    const record = await db.insertInto("description")
       .values(input.files.map(file => ({
+        id: crypto.randomUUID(),
         file_id: file.id,
         user_id: userId,
         batch_id: batchId,
@@ -40,7 +41,7 @@ export const postFileIds = defineAction({
     }
     catch (e) {
       console.error("batch id", batchId, "user id", userId, e);
-      await db.withSchema("keyworder").deleteFrom("description")
+      await db.deleteFrom("description")
         .where("batch_id", "=", batchId)
         .where("user_id", "=", userId)
         .execute();

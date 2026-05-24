@@ -42,7 +42,6 @@ export async function requireAdmin(headers: Headers) {
 
 export async function getCreditCosts() {
   const row = await db
-    .withSchema("keyworder")
     .selectFrom("app_settings")
     .select("value")
     .where("key", "=", "credit_costs")
@@ -56,7 +55,7 @@ export async function getCreditCosts() {
     };
   }
 
-  const value = row.value as Record<string, number>;
+  const value = JSON.parse(row.value) as Record<string, number>;
 
   return {
     upload: typeof value.upload === "number" ? value.upload : CREDIT_COST_UPLOAD,
@@ -72,11 +71,9 @@ export async function deductCredits(
 ) {
   await db.transaction().execute(async (trx) => {
     const user = await trx
-      .withSchema("keyworder")
       .selectFrom("user")
       .select("credits")
       .where("id", "=", userId)
-      .forUpdate()
       .executeTakeFirst();
 
     if (!user || user.credits < amount) {
@@ -87,7 +84,6 @@ export async function deductCredits(
     }
 
     await trx
-      .withSchema("keyworder")
       .updateTable("user")
       .set(eb => ({
         credits: eb("credits", "-", amount),
@@ -96,13 +92,13 @@ export async function deductCredits(
       .executeTakeFirst();
 
     await trx
-      .withSchema("keyworder")
       .insertInto("credit_audit")
       .values({
+        id: crypto.randomUUID(),
         user_id: userId,
         amount: -amount,
         action,
-        metadata: metadata ?? null,
+        metadata: metadata ? JSON.stringify(metadata) : null,
       })
       .execute();
   });

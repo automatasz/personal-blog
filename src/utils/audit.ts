@@ -7,13 +7,13 @@ export async function createCreditAudit(
   metadata?: Record<string, unknown>,
 ) {
   await db
-    .withSchema("keyworder")
     .insertInto("credit_audit")
     .values({
+      id: crypto.randomUUID(),
       user_id: userId,
       amount,
       action,
-      metadata,
+      metadata: metadata ? JSON.stringify(metadata) : null,
     })
     .execute();
 }
