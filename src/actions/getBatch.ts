@@ -9,7 +9,7 @@ export const getBatch = defineAction({
     batchId: z.string().uuid(),
   }),
   handler: async (input, context) => {
-    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
     const rows = await db
       .selectFrom("description")
       .selectAll()

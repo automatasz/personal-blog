@@ -8,7 +8,7 @@ const COSTS_KEY = "credit_costs";
 
 export const getAppSettings = defineAction({
   handler: async (input, context) => {
-    await checkIfSignedInAndGetUserId(context.request.headers);
+    await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
 
     const row = await db
       .selectFrom("app_settings")
@@ -48,7 +48,7 @@ export const updateAppSettings = defineAction({
     }),
   }),
   handler: async (input, context) => {
-    const userId = await requireAdmin(context.request.headers);
+    const userId = await requireAdmin(context.request.headers, context.locals);
 
     const newValue = {
       upload: input.creditCosts.upload,

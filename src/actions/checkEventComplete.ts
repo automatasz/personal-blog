@@ -10,7 +10,7 @@ export const checkEventComplete = defineAction({
     batchId: z.string().uuid(),
   }),
   handler: async (input, context) => {
-    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
     const { successCount, totalCount } = await db
       .selectFrom("description")
       .select(({ fn }) => [

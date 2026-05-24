@@ -15,7 +15,7 @@ export const postFileIds = defineAction({
     })),
   }),
   handler: async (input, context) => {
-    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
     const queue = (context.locals as any).runtime.env.IMAGE_QUEUE;
     const batchId = crypto.randomUUID();
 

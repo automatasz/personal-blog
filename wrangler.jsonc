@@ -15,7 +15,7 @@
   "d1_databases": [{
     "binding": "DB",
     "database_name": "fuwari-db",
-    "database_id": ""
+    "database_id": "placeholder"
   }],
   "queues": {
     "producers": [{

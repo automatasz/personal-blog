@@ -4,7 +4,7 @@ import { db } from "@utils/db";
 
 export const getStats = defineAction({
   handler: async (input, context) => {
-    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
 
     const { batchCount } = await db
       .selectFrom("description")

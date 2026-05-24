@@ -1,11 +1,10 @@
 import { initDb } from "@utils/db";
-import { initAuth } from "@utils/auth";
+import type { MiddlewareHandler } from "astro";
 
-export const onRequest = async (context, next) => {
+export const onRequest: MiddlewareHandler = async (context, next) => {
   const env = (context.locals as any).runtime?.env;
   if (env?.DB) {
     initDb(env.DB);
-    initAuth(env.DB);
   }
   return next();
 };

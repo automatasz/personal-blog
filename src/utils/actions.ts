@@ -1,13 +1,26 @@
 import { ActionError } from "astro:actions";
-import { auth } from "./auth";
+import { auth, initAuth } from "./auth";
 import { db } from "./db";
 import {
   CREDIT_COST_UPLOAD,
   CREDIT_COST_DESCRIBE,
   CREDIT_COST_REGENERATE,
 } from "@/constants/credit-costs";
+import { GOOGLE_AUTH_CLIENT_ID, GOOGLE_AUTH_CLIENT_SECRET, CF_PAGES_URL } from "astro:env/server";
 
-export async function checkIfSignedInAndGetUserId(headers: Headers) {
+function ensureAuth(locals?: any) {
+  const d1 = locals?.runtime?.env?.DB;
+  if (d1) {
+    initAuth(d1, {
+      GOOGLE_AUTH_CLIENT_ID,
+      GOOGLE_AUTH_CLIENT_SECRET,
+      CF_PAGES_URL,
+    });
+  }
+}
+
+export async function checkIfSignedInAndGetUserId(headers: Headers, locals?: any) {
+  ensureAuth(locals);
   const session = await auth.api.getSession({ headers });
 
   if (!session?.session) {
@@ -20,7 +33,8 @@ export async function checkIfSignedInAndGetUserId(headers: Headers) {
   return session.user.id;
 }
 
-export async function requireAdmin(headers: Headers) {
+export async function requireAdmin(headers: Headers, locals?: any) {
+  ensureAuth(locals);
   const session = await auth.api.getSession({ headers });
 
   if (!session?.session) {

@@ -11,7 +11,7 @@ export const prerender = false;
 let settingsData: Record<string, number> | null = null;
 
 try {
-  await requireAdmin(Astro.request.headers);
+  await requireAdmin(Astro.request.headers, Astro.locals);
 
   const row = await db
     .selectFrom("app_settings")

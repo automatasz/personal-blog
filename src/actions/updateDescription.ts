@@ -12,7 +12,7 @@ export const updateDescription = defineAction({
     keywords: z.array(z.string()).optional(),
   }),
   handler: async (input, context) => {
-    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
 
     const updateData: {
       title?: string | null;
@@ -46,7 +46,7 @@ export const regenerateDescription = defineAction({
     descriptionId: z.string().uuid(),
   }),
   handler: async (input, context) => {
-    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
     const queue = (context.locals as any).runtime.env.IMAGE_QUEUE;
 
     const record = await db.selectFrom("description")

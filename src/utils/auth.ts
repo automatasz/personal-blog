@@ -1,10 +1,15 @@
 import { betterAuth } from "better-auth";
 import { D1Dialect } from "kysely-d1";
-import { GOOGLE_AUTH_CLIENT_ID, GOOGLE_AUTH_CLIENT_SECRET, CF_PAGES_URL } from "astro:env/server";
 
 let _auth: ReturnType<typeof betterAuth> | undefined;
 
-export function initAuth(d1: unknown) {
+interface AuthConfig {
+  GOOGLE_AUTH_CLIENT_ID: string;
+  GOOGLE_AUTH_CLIENT_SECRET: string;
+  CF_PAGES_URL?: string;
+}
+
+export function initAuth(d1: unknown, config: AuthConfig) {
   if (_auth) return;
   _auth = betterAuth({
     database: {
@@ -40,11 +45,11 @@ export function initAuth(d1: unknown) {
     },
     socialProviders: {
       google: {
-        clientId: GOOGLE_AUTH_CLIENT_ID,
-        clientSecret: GOOGLE_AUTH_CLIENT_SECRET,
+        clientId: config.GOOGLE_AUTH_CLIENT_ID,
+        clientSecret: config.GOOGLE_AUTH_CLIENT_SECRET,
       },
     },
-    trustedOrigins: ["http://localhost:4321", "http://lievono:4321"].concat(CF_PAGES_URL ? [`https://${CF_PAGES_URL}`] : []),
+    trustedOrigins: ["http://localhost:4321", "http://lievono:4321"].concat(config.CF_PAGES_URL ? [`https://${config.CF_PAGES_URL}`] : []),
   });
 }
 
