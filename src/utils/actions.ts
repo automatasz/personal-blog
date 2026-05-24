@@ -30,7 +30,7 @@ export async function requireAdmin(headers: Headers) {
     });
   }
 
-  if (session.user.role !== "admin") {
+  if ((session.user as any).role !== "admin") {
     throw new ActionError({
       code: "FORBIDDEN",
       message: "You do not have permission to access this resource",

@@ -123,11 +123,9 @@ export default defineConfig({
       POSTHOG_API_KEY: envField.string({ context: "client", access: "public", optional: false }),
       POSTHOG_API_HOST: envField.string({ context: "client", access: "public", optional: false }),
       OPENAI_API_KEY: envField.string({ context: "server", access: "secret", optional: false }),
-      DATABASE_URL: envField.string({ context: "server", access: "secret", optional: false }),
       GOOGLE_AUTH_CLIENT_ID: envField.string({ context: "server", access: "secret", optional: false }),
       GOOGLE_AUTH_CLIENT_SECRET: envField.string({ context: "server", access: "secret", optional: false }),
-      INNGEST_API_URL: envField.string({ context: "server", access: "secret", optional: false }),
-      INNGEST_SIGNING_KEY: envField.string({ context: "server", access: "secret", optional: false }),
+
       UPLOADTHING_TOKEN: envField.string({ context: "server", access: "secret", optional: false }),
       UPLOADTHING_APP_ID: envField.string({ context: "client", access: "public", optional: false }),
       CF_PAGES_URL: envField.string({ context: "server", access: "secret", optional: true }),

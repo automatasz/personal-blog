@@ -1,45 +1,57 @@
 import { betterAuth } from "better-auth";
+import { D1Dialect } from "kysely-d1";
 import { GOOGLE_AUTH_CLIENT_ID, GOOGLE_AUTH_CLIENT_SECRET, CF_PAGES_URL } from "astro:env/server";
-import { dialect } from "@utils/db";
 
-export const auth = betterAuth({
-  database: {
-    dialect,
-    type: "postgres",
-  },
-  user: {
-    modelName: "keyworder.user",
-    additionalFields: {
-      role: {
-        type: "string",
-        required: true,
-        defaultValue: "user",
-        input: false, // don't allow user to set role
+let _auth: ReturnType<typeof betterAuth> | undefined;
+
+export function initAuth(d1: unknown) {
+  if (_auth) return;
+  _auth = betterAuth({
+    database: {
+      dialect: new D1Dialect({ database: d1 as any }),
+      type: "sqlite",
+    },
+    user: {
+      modelName: "user",
+      additionalFields: {
+        role: {
+          type: "string",
+          required: true,
+          defaultValue: "user",
+          input: false,
+        },
       },
     },
-  },
-  session: {
-    modelName: "keyworder.session",
-    // performance improvements
-    cookieCache: {
+    session: {
+      modelName: "session",
+      cookieCache: {
+        enabled: true,
+        maxAge: 300,
+      },
+    },
+    account: {
+      modelName: "account",
+    },
+    verification: {
+      modelName: "verification",
+    },
+    emailAndPassword: {
       enabled: true,
-      maxAge: 300, // cache duration in seconds
     },
-  },
-  account: {
-    modelName: "keyworder.account",
-  },
-  verification: {
-    modelName: "keyworder.verification",
-  },
-  emailAndPassword: {
-    enabled: true,
-  },
-  socialProviders: {
-    google: {
-      clientId: GOOGLE_AUTH_CLIENT_ID,
-      clientSecret: GOOGLE_AUTH_CLIENT_SECRET,
+    socialProviders: {
+      google: {
+        clientId: GOOGLE_AUTH_CLIENT_ID,
+        clientSecret: GOOGLE_AUTH_CLIENT_SECRET,
+      },
     },
+    trustedOrigins: ["http://localhost:4321", "http://lievono:4321"].concat(CF_PAGES_URL ? [`https://${CF_PAGES_URL}`] : []),
+  });
+}
+
+export const auth = new Proxy({} as ReturnType<typeof betterAuth>, {
+  get(_, prop) {
+    if (!_auth) throw new Error("Auth not initialized. Call initAuth() first.");
+    const value = (_auth as any)[prop];
+    return typeof value === "function" ? value.bind(_auth) : value;
   },
-  trustedOrigins: ["http://localhost:4321", "http://lievono:4321"].concat(CF_PAGES_URL ? [`https://${CF_PAGES_URL}`] : []),
 });

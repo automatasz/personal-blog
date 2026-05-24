@@ -3,8 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "INNGEST_DEV=1 astro dev --host",
-    "dev:all": "INNGEST_DEV=1 astro dev --host & INNGEST_DEV=1 npx inngest-cli@latest dev -u http://localhost:4321/api/inngest & wait",
+    "dev": "astro dev --host",
     "start": "astro dev",
     "build": "astro build && pagefind --site dist",
     "deploy": "wrangler deploy",
@@ -30,7 +29,7 @@
     "@iconify-json/fa6-solid": "^1.2.2",
     "@iconify-json/material-symbols": "^1.2.8",
     "@iconify/svelte": "^4.0.2",
-    "@neondatabase/serverless": "^1.1.0",
+
     "@stylistic/eslint-plugin": "^4.4.1",
     "@swup/astro": "^1.8.0",
     "@tailwindcss/typography": "^0.5.15",
@@ -40,9 +39,10 @@
     "astro-icon": "^1.1.5",
     "better-auth": "^1.2.9",
     "hastscript": "^9.0.0",
-    "inngest": "^4.4.0",
+
     "katex": "^0.16.19",
     "kysely": "^0.28.2",
+    "openai": "^5.3.0",
     "kysely-d1": "^0.4.0",
     "markdown-it": "^14.1.0",
     "mdast-util-to-string": "^4.0.0",
