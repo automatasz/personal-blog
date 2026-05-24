@@ -1,6 +1,5 @@
 import { defineAction } from "astro:actions";
 import { z } from "astro:schema";
-import { inngest } from "@/inngest";
 import { checkIfSignedInAndGetUserId } from "@utils/actions";
 import { CREDIT_COST_DESCRIBE } from "@/constants/credit-costs";
 import { db } from "@utils/db";
@@ -17,6 +16,7 @@ export const postFileIds = defineAction({
   }),
   handler: async (input, context) => {
     const userId = await checkIfSignedInAndGetUserId(context.request.headers);
+    const queue = (context.locals as any).runtime.env.IMAGE_QUEUE;
     const batchId = crypto.randomUUID();
 
     const record = await db.insertInto("description")
@@ -32,12 +32,16 @@ export const postFileIds = defineAction({
       .returningAll()
       .execute();
 
-    const events = record.map((description) => {
-      return sendEvent(description.file_id, description.id, userId);
-    });
-
     try {
-      await Promise.all(events);
+      await Promise.all(record.map((description) =>
+        queue.send({
+          fileId: description.file_id,
+          descriptionId: description.id,
+          userId,
+          cost: CREDIT_COST_DESCRIBE,
+          mode: "generate" as const,
+        })
+      ));
     }
     catch (e) {
       console.error("batch id", batchId, "user id", userId, e);
@@ -52,16 +56,3 @@ export const postFileIds = defineAction({
     return batchId;
   },
 });
-
-async function sendEvent(fileId: string, descriptionId: string, userId: string) {
-  return inngest.send({
-    name: "keyworder/image.describe",
-    data: {
-      fileId,
-      descriptionId,
-      userId,
-      cost: CREDIT_COST_DESCRIBE,
-      mode: "generate",
-    },
-  });
-}

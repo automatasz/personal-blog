@@ -11,5 +11,16 @@
   },
   "observability": {
     "enabled": true
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "fuwari-db",
+    "database_id": ""
+  }],
+  "queues": {
+    "producers": [{
+      "queue": "image-describe",
+      "binding": "IMAGE_QUEUE"
+    }]
   }
 }
