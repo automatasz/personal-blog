@@ -31,11 +31,11 @@ A credit-gated tool for bulk-uploading images, generating AI-powered SEO metadat
        │                      │
        ▼                      ▼
 ┌──────────────┐    ┌─────────────────────────┐
-│   Database   │    │   Inngest (queue)        │
-│  PostgreSQL  │◄───│  keyworder/image.describe│
-│  (keyworder  │    │  (1 retry, 3-4 steps)    │
-│   schema)    │    └──────────┬───────────────┘
-└──────────────┘               │
+│   Database   │    │   Cloudflare Queues      │
+│  D1 SQLite   │◄───│  image-describe Queue    │
+│  (no schema) │    │  (standalone consumer)   │
+└──────────────┘    └──────────┬───────────────┘
+                               │
                                ▼
                      ┌─────────────────┐
                      │  OpenAI GPT-4.1 │
@@ -48,13 +48,13 @@ A credit-gated tool for bulk-uploading images, generating AI-powered SEO metadat
 ## Technology stack
 
 | Layer | Technology |
-|---|---|
-| Framework | Astro 5 SSR (Vercel) + server actions |
+|---|---|---|
+| Framework | Astro 6 SSR (Cloudflare Workers) + server actions |
 | Frontend | Svelte 5 (runes mode: `$state`, `$derived`, `$props`, `$effect`) |
-| Database | PostgreSQL via Kysely (typed query builder, `keyworder` schema) |
+| Database | D1 SQLite via Kysely (typed query builder, no schema) |
 | Auth | better-auth (Google OAuth + email/password, role-based, cookie cache 5 min) |
 | File storage | UploadThing (S3-compatible CDN, 128MB max, 100 files max) |
-| Background jobs | Inngest (event-driven, durable execution, 1 retry) |
+| Background jobs | Cloudflare Queues (standalone consumer Worker with D1 access) |
 | AI | OpenAI GPT-4.1 Nano with structured output (Zod) via Responses API |
 | Lightbox | PhotoSwipe (wheel-to-zoom, tap-to-close, custom close SVG) |
 | Icons | Iconify (Lucide + Material Symbols) |
@@ -72,37 +72,37 @@ A credit-gated tool for bulk-uploading images, generating AI-powered SEO metadat
 
 ## Database schema
 
-All tables in `keyworder` schema.
+No schema prefix (D1/SQLite flat namespace). JSON columns stored as TEXT with `JSON.parse`/`JSON.stringify` at action boundaries.
 
-### `keyworder.description`
-Stores each image and its generated metadata. The original migration (2025-06-14) created this with a `job_id` column; subsequent app-level DDL added `batch_id`, `file_name`, `width`, `height`, `result`, `tokens_used` and dropped `job_id`.
+### `description`
+Stores each image and its generated metadata.
 
 | Column | Type | Description |
 |---|---|---|
-| `id` | uuid PK (`gen_random_uuid()`) | Auto-generated |
+| `id` | text PK (`crypto.randomUUID()`) | Auto-generated |
 | `file_id` | text | UploadThing file key |
 | `file_name` | text | Original filename |
-| `keywords` | text[] | Array of ~100 SEO keywords |
+| `keywords` | text | JSON array of ~100 SEO keywords |
 | `description` | text | AI-generated long description |
 | `title` | text | AI-generated title |
-| `user_id` | text FK | Links to `keyworder.user` (`on delete cascade`) |
+| `user_id` | text FK | Links to `user` |
 | `batch_id` | text | UUID shared by all images in a batch |
 | `tokens_used` | int | OpenAI tokens consumed |
 | `result` | text | `"success"` or `"fail"` (nullable while pending) |
 | `width` | int | Image width in pixels |
 | `height` | int | Image height in pixels |
-| `created_at` | timestamp | Row creation time (`default now()`) |
+| `created_at` | text | Row creation time (`CURRENT_TIMESTAMP`) |
 
-### `keyworder.batch`
+### `batch`
 Stores the generated title for a completed batch.
 
 | Column | Type | Description |
 |---|---|---|
 | `id` | text PK | Same UUID as `description.batch_id` |
 | `title` | text | AI-generated collection title |
-| `created_at` | timestamp | Row creation time |
+| `created_at` | text | Row creation time |
 
-### `keyworder.user`
+### `user`
 Auth table managed by better-auth, with an additional business column for credits.
 
 | Column | Type | Description |
@@ -110,35 +110,35 @@ Auth table managed by better-auth, with an additional business column for credit
 | `id` | text PK | User ID |
 | `name` | text | Display name |
 | `email` | text UNIQUE | Email address |
-| `emailVerified` | boolean | Email verification status |
+| `emailVerified` | integer | Email verification status |
 | `image` | text | Avatar URL |
 | `role` | text | `"admin"` or `"user"` |
 | `credits` | int | Remaining credit balance (default 0, admin seed 200) |
-| `createdAt` | timestamp | Account creation time |
-| `updatedAt` | timestamp | Last update time |
+| `createdAt` | text | Account creation time |
+| `updatedAt` | text | Last update time |
 
-### `keyworder.credit_audit`
-Credit transaction trail. Created by migration `2026-05-14_add_credit_audit.sql`.
+### `credit_audit`
+Credit transaction trail.
 
 | Column | Type | Description |
 |---|---|---|
-| `id` | uuid PK (`gen_random_uuid()`) | Auto-generated |
-| `user_id` | text FK | Reference to `keyworder.user` |
+| `id` | text PK (`crypto.randomUUID()`) | Auto-generated |
+| `user_id` | text FK | Reference to `user` |
 | `amount` | integer | Negative for deductions, positive for grants |
 | `action` | text | Describes the action (e.g. `"upload"`, `"describe"`, `"regenerate"`) |
-| `metadata` | jsonb | Arbitrary context (e.g. `{fileKey, batchId, descriptionId}`) |
-| `created_at` | timestamp | Row creation time (`default now()`) |
+| `metadata` | text | JSON object (e.g. `{fileKey, batchId, descriptionId}`) |
+| `created_at` | text | Row creation time (`CURRENT_TIMESTAMP`) |
 
-### `keyworder.session`, `keyworder.account`, `keyworder.verification`
-Auth tables managed by better-auth.
+### `session`, `account`, `verification`
+Auth tables managed by better-auth (SQLite dialect, flat names).
 
 ### Migrations
 
 | File | Content |
 |---|---|
-| `better-auth_migrations/2025-06-14T16-15-38.649Z.sql` | Creates `keyworder` schema + initial `user`, `session`, `account`, `verification`, `description` |
-| `keyworder_migrations/2026-05-14_add_credits.sql` | Adds `credits` column to `keyworder.user` (default 0), seeds admins with 200 |
-| `keyworder_migrations/2026-05-14_add_credit_audit.sql` | Creates `credit_audit` table |
+| `d1-migrations/0000_init.sql` | Creates all tables: user, session, account, verification, description, batch, credit_audit |
+
+Apply: `pnpm wrangler d1 migrations apply fuwari-db`
 
 ## End-to-end flow
 
@@ -155,20 +155,20 @@ Auth tables managed by better-auth.
 8. **`postFileIds` action** (`src/actions/postFileIds.ts`):
    - Validates session via `checkIfSignedInAndGetUserId()`.
    - Generates `batchId` UUID via `crypto.randomUUID()`.
-   - Inserts one row per file into `keyworder.description` with `batch_id`.
-   - Fires one `keyworder/image.describe` Inngest event per image (each carries `fileId` + `descriptionId`). Sent in parallel via `Promise.all`.
-   - On Inngest failure: cleans up (deletes DB rows + calls `uploadthing.deleteFiles`).
+   - Inserts one row per file into `description` with `batch_id`.
+   - Sends one `image-describe` queue message per image (each carries `fileId` + `descriptionId`). Sent in parallel via `Promise.all`. Uses `context.locals.runtime.env.IMAGE_QUEUE.send()`.
+   - On queue send failure: cleans up (deletes DB rows + calls `uploadthing.deleteFiles`).
    - Deducts `files.length * CREDIT_COST_DESCRIBE` credits atomically via `deductCredits()`.
    - Returns the `batchId`.
 9. Browser navigates to `/batch?id=<batchId>` via Astro `navigate()`.
 
 ### Step 3: Background AI processing
-10. **`image-describe` Inngest function** (`src/inngest/describe-image.ts`, `retries: 1`, listens to `keyworder/image.describe`):
+10. **`image-describe` queue consumer** (`src/queue-worker.ts`, 3 retries before DLQ, listens to `image-describe` queue):
 
-    - **Step "openai.wrap.image.describe"**: Calls OpenAI GPT-4.1 Nano with image URL (`https://<appId>.ufs.sh/f/<fileId>`, `detail: "low"`) and SEO prompt. Uses `zodTextFormat(descriptionSchema)` for structured JSON.
-    - **Step "image.save"**: Persists response to `keyworder.description`. Sets `result` to `"success"` or `"fail"`. Stores `tokens_used`. Checks if all descriptions in batch are done via `getBatchSuccessCount()`. If fully done, fetches all titles for batch-title gen.
-    - **Step "openai.wrap.batch.title"** (conditional): Calls OpenAI with newspaper-writer prompt + individual titles (newline-separated). Uses `zodTextFormat(batchSchema)`.
-    - **Step "batch.complete"** (conditional): Inserts batch title into `keyworder.batch`. Handles unique constraint violations gracefully (`error.code === "23505"` -- silent skip).
+    - Calls OpenAI GPT-4.1 Nano with image URL (`https://<appId>.ufs.sh/f/<fileId>`, `detail: "low"`) and SEO prompt. Uses `zodTextFormat(descriptionSchema)` for structured JSON.
+    - Saves response to `description` table. Sets `result` to `"success"` or `"fail"`. Stores `tokens_used`. Checks if all descriptions in batch are done via `getBatchSuccessCount()`. If fully done, fetches all titles for batch-title gen.
+    - (conditional) Calls OpenAI with newspaper-writer prompt + individual titles (newline-separated). Uses `zodTextFormat(batchSchema)`.
+    - (conditional) Inserts batch title into `batch` table. Handles unique constraint violations gracefully (SELECT before INSERT — silent skip).
 
 ### Step 4: Results display
 11. `ImageDescriptions.svelte` mounts on `/batch` and calls `actions.getBatch()`.
@@ -179,7 +179,7 @@ Auth tables managed by better-auth.
 
 ### Step 5: Editing and export
 16. **In-place editing**: Pencil icon switches to edit mode (input fields for title, description, comma-separated keywords in textarea). `slide` transition. Save calls `actions.updateDescription()` -- validates session, updates row (0 credits).
-17. **Regeneration**: Refresh icon calls `actions.regenerateDescription()` -- verifies ownership, calls OpenAI synchronously via `openai.responses.parse` (bypasses Inngest), deducts `CREDIT_COST_REGENERATE` credits, updates DB.
+17. **Regeneration**: Refresh icon calls `actions.regenerateDescription()` -- verifies ownership, calls OpenAI synchronously via `openai.responses.parse` (bypasses queue), deducts `CREDIT_COST_REGENERATE` credits, updates DB.
 18. **Copy keywords**: Per-image button copies all keywords as comma-separated string via `navigator.clipboard.writeText()`.
 19. **Adobe Stock CSV**: Client-side Blob generation. Columns: `Filename`, `Title`, `Keywords`, `Category` (always `"3"`), `Releases` (empty). Escapes commas and quotes (double-quote wrapping with `""` escaping).
 
@@ -189,8 +189,8 @@ Auth tables managed by better-auth.
 ## Credit system
 
 ### Credit deduction (`deductCredits` in `src/utils/actions.ts`)
-Atomic deduction inside a Kysely transaction with `FOR UPDATE` row lock:
-1. Selects user's current credits with `FOR UPDATE` (row-level lock).
+Deduction in a transaction (D1 serialized writes — no `FOR UPDATE` needed):
+1. Selects user's current credits.
 2. Throws `ActionError` with `code: "FORBIDDEN"` if insufficient.
 3. Decrements via `eb("credits", "-", amount)`.
 4. Inserts row into `credit_audit` with `user_id`, negative `amount`, descriptive `action`, `metadata`.
@@ -200,7 +200,7 @@ Atomic deduction inside a Kysely transaction with `FOR UPDATE` row lock:
 | Action | Constant | Cost | Deduction timing |
 |---|---|---|---|
 | Upload | `CREDIT_COST_UPLOAD` | 1 credit | `onUploadComplete` callback |
-| Describe (batch) | `CREDIT_COST_DESCRIBE` | 7 credits/image | After Inngest events dispatched |
+| Describe (batch) | `CREDIT_COST_DESCRIBE` | 7 credits/image | After queue messages dispatched |
 | Regenerate | `CREDIT_COST_REGENERATE` | 5 credits | After AI response received |
 | Edit | -- | 0 credits | N/A |
 | View | -- | 0 credits | N/A |
@@ -236,7 +236,6 @@ Followed by individual titles, one per line. Parsed with `batchSchema` (`{ title
 ### Pages
 - `src/pages/keyworder.astro` -- Main page at `/keyworder`. `MainGridLayout`, hero with 4-step guide, renders `KeyworderSvelte` `client:load`.
 - `src/pages/batch.astro` -- Batch results at `/batch?id=<uuid>`. `MainGridLayout`, "Upload" link back, passes `UPLOADTHING_APP_ID` to `ImageDescriptions` `client:load`.
-- `src/pages/api/inngest.ts` -- Inngest webhook (GET, POST, PUT). `prerender = false`.
 - `src/pages/api/uploadthing.ts` -- UploadThing webhook (GET, POST). `prerender = false`.
 
 ### Components (Svelte 5 runes)
@@ -248,25 +247,22 @@ Followed by individual titles, one per line. Parsed with `batchSchema` (`{ title
 - `src/components/UserSessionCard.svelte` -- Sign-in (Google OAuth, `callbackURL: "/keyworder"`) / sign-out button. Uses `authClient.useSession()`.
 
 ### Actions (Astro server, exported via `src/actions/index.ts`)
-- `src/actions/postFileIds.ts` -- Insert rows, dispatch Inngest events, deduct credits. Rolls back on failure.
+- `src/actions/postFileIds.ts` -- Insert rows, send queue messages, deduct credits. Rollback on failure.
 - `src/actions/getBatch.ts` -- Fetch descriptions + batch title by `batchId`/`userId`.
 - `src/actions/getBatches.ts` -- List completed batches aggregated with COUNT, MIN, grouped by batch_id.
 - `src/actions/checkEventComplete.ts` -- Poll: compare non-null result count vs total.
 - `src/actions/getStats.ts` -- Aggregate stats: batch count, image count, token sum, current credits.
 - `src/actions/updateDescription.ts` -- Two exports: `updateDescription` (edit, 0 credits) and `regenerateDescription` (sync AI + credit deduction + DB update).
 
-### Inngest
-- `src/inngest/client.ts` -- Client with `id: "keyworder"`.
-- `src/inngest/types.ts` -- Zod schemas: `descriptionSchema` and `batchSchema`.
-- `src/inngest/describe-image.ts` -- `image-describe` function (1 retry, `keyworder/image.describe` trigger, 3-4 stepDurable steps).
-- `src/inngest/index.ts` -- Barrel export: `functions` array + `inngest` client.
+### Queue Worker
+- `src/queue-worker.ts` -- Standalone Cloudflare Worker. Consumes `image-describe` queue, calls OpenAI, writes to D1.
 
 ### Utilities
-- `src/utils/db.ts` -- Kysely instance + TypeScript types for all 7 keyworder tables. Pool with SSL `rejectUnauthorized: false`. Query logging in DEV.
-- `src/utils/utils.db.ts` -- `getBatchSuccessCount(batchId)` (filtered count of non-null results) + `getBatchTitles(batchId)` (list of titles).
+- `src/utils/db.ts` -- Kysely instance + D1Dialect + lazy `initDb()`. TypeScript types for all tables.
+- `src/utils/utils.db.ts` -- `getBatchSuccessCount(batchId)` (CASE WHEN count of non-null results) + `getBatchTitles(batchId)` (list of titles).
 - `src/utils/ai.ts` -- OpenAI client init with `OPENAI_API_KEY`.
-- `src/utils/actions.ts` -- `checkIfSignedInAndGetUserId(headers)` session guard + `deductCredits(userId, amount, action, metadata?)` atomic balance check with `FOR UPDATE` row lock and audit trail.
-- `src/utils/auth.ts` -- better-auth config: PostgreSQL dialect, keyworder schema model names, email/password + Google OAuth, cookie cache (5 min), trusted origins.
+- `src/utils/actions.ts` -- `checkIfSignedInAndGetUserId(headers, locals)` session guard + `requireAdmin(headers, locals)` + `deductCredits(userId, amount, action, metadata?)` balance check with audit trail.
+- `src/utils/auth.ts` -- better-auth config: SQLite dialect, flat model names, email/password + Google OAuth, cookie cache (5 min), trusted origins.
 - `src/utils/auth-client.ts` -- Two clients: `authClient` (Svelte, `better-auth/svelte`) and `authClientVanilla` (vanilla, `better-auth/client`). Both with `inferAdditionalFields`.
 - `src/utils/storage.ts` -- UploadThing `FileRouter` for `imageUploader`: 128MB, 100 files, session middleware, credit deduction in `onUploadComplete`. Also exports `UTApi` instance.
 - `src/utils/storage-client.ts` -- `createUploader()` + `UploadButton` from `@uploadthing/svelte`, typed with `OurFileRouter`. `minifyImage()` function.
@@ -283,9 +279,9 @@ Followed by individual titles, one per line. Parsed with `batchSchema` (`{ title
 
 ## Error handling & edge cases
 
-- **Inngest failure in postFileIds**: All inserted rows + uploaded files cleaned up. User not charged.
-- **Duplicate batch title**: `batch.complete` catches PG unique violation (`code: "23505"`) and silently skips.
-- **AI parse failure**: `image.save` uses `safeParse`; sets `result: "fail"`, stores no title/description/keywords.
+- **Queue send failure in postFileIds**: All inserted rows + uploaded files cleaned up. User not charged.
+- **Duplicate batch title**: queue consumer checks existence before INSERT -- silent skip.
+- **AI parse failure**: queue consumer uses `safeParse`; sets `result: "fail"`, stores no title/description/keywords.
 - **Ownership check**: `updateDescription` filters by both `id` + `user_id`. Returns `FORBIDDEN` if no match.
 - **Insufficient credits**: `deductCredits` throws `ActionError` with `FORBIDDEN`. UI shows warning with removal suggestion.
 - **Upload error**: `onUploadError` shows browser alert for `INTERNAL_CLIENT_ERROR`.
@@ -299,11 +295,8 @@ Followed by individual titles, one per line. Parsed with `batchSchema` (`{ title
 | Variable | Type | Purpose |
 |---|---|---|
 | `OPENAI_API_KEY` | server secret | OpenAI API key |
-| `DATABASE_URL` | server secret | PostgreSQL connection string |
 | `UPLOADTHING_TOKEN` | server secret | UploadThing API token |
 | `UPLOADTHING_APP_ID` | client public | UploadThing app ID (used in image URLs) |
-| `INNGEST_API_URL` | server secret | Inngest endpoint (optional, defaults to Cloud) |
-| `INNGEST_SIGNING_KEY` | server secret | Inngest signing key |
 | `BETTER_AUTH_SECRET` | server secret | Auth session encryption secret |
 | `GOOGLE_AUTH_CLIENT_ID` / `GOOGLE_AUTH_CLIENT_SECRET` | server secret | Google OAuth credentials |
 
@@ -318,10 +311,10 @@ Followed by individual titles, one per line. Parsed with `batchSchema` (`{ title
 
 ## Key extraction notes
 
-1. All DB queries use `db.withSchema("keyworder")`.
-2. Auth is tightly coupled to `keyworder` schema (better-auth model names).
+1. All DB queries use flat table names (no schema prefix).
+2. Auth uses SQLite adapter with flat model names.
 3. Astro actions are the API layer (RPC-style, not REST).
-4. Inngest event: `keyworder/image.describe` with `data: { fileId, descriptionId }`.
+4. Queue message: `image-describe` with `data: { fileId, descriptionId }`.
 5. UploadThing file router in `src/utils/storage.ts` with middleware + `onUploadComplete`.
 6. CSS variables and `tailwind-merge` for UploadThing styling need porting.
 7. `daysAgo`/`getTime` from `@utils/date-utils` used by `BatchList.svelte`.

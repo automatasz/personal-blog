@@ -1,56 +1,28 @@
-import { readFileSync } from "fs";
-import { resolve } from "path";
-import { Pool } from "pg";
-import { Kysely, PostgresDialect } from "kysely";
+import { execSync } from "child_process";
 import { UTApi } from "uploadthing/server";
 
-// Parse .env file since we're outside Astro's build
-function loadEnv() {
-  const envPath = resolve(import.meta.dirname, "../.env");
-  try {
-    const content = readFileSync(envPath, "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eqIdx = trimmed.indexOf("=");
-      if (eqIdx === -1) continue;
-      const key = trimmed.slice(0, eqIdx).trim();
-      let val = trimmed.slice(eqIdx + 1).trim();
-      // Strip surrounding quotes
-      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-        val = val.slice(1, -1);
-      }
-      if (!process.env[key]) {
-        process.env[key] = val;
-      }
-    }
-  } catch {
-    // .env file not found, rely on process.env
-  }
-}
-
-loadEnv();
-
-const DATABASE_URL = process.env.DATABASE_URL;
+const D1_DB = "fuwari-db";
 const UPLOADTHING_TOKEN = process.env.UPLOADTHING_TOKEN;
 
-if (!DATABASE_URL || !UPLOADTHING_TOKEN) {
-  console.error("Missing DATABASE_URL or UPLOADTHING_TOKEN env var");
+if (!UPLOADTHING_TOKEN) {
+  console.error("Missing UPLOADTHING_TOKEN env var");
   process.exit(1);
 }
 
-const db = new Kysely({
-  dialect: new PostgresDialect({
-    pool: new Pool({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } }),
-  }),
-});
-
 const uploadthing = new UTApi({ token: UPLOADTHING_TOKEN });
+
+function queryD1(sql: string): { file_id: string }[] {
+  const out = execSync(
+    `pnpm wrangler d1 execute ${D1_DB} --command "${sql}" --json --remote`,
+    { encoding: "utf-8" },
+  );
+  const results = JSON.parse(out);
+  return results?.[0]?.results ?? [];
+}
 
 async function main() {
   const deleteFlag = process.argv.includes("--delete");
 
-  // 1. List all files from UploadThing (paginated)
   console.log("Fetching all UploadThing files...");
   const allFiles: { key: string; name: string; size: number }[] = [];
   let hasMore = true;
@@ -66,16 +38,10 @@ async function main() {
     offset += limit;
   }
 
-  // 2. Get all known file_ids from DB
-  console.log("Fetching known files from DB...");
-  const dbFiles = await db
-    .withSchema("keyworder")
-    .selectFrom("description")
-    .select("file_id")
-    .execute();
+  console.log("Fetching known files from D1...");
+  const dbFiles = queryD1("SELECT file_id FROM description");
   const knownKeys = new Set(dbFiles.map((r) => r.file_id));
 
-  // 3. Find orphans
   const orphans = allFiles.filter((f) => !knownKeys.has(f.key));
   const totalSize = orphans.reduce((sum, f) => sum + f.size, 0);
 
@@ -86,28 +52,23 @@ async function main() {
 
   if (orphans.length === 0) {
     console.log("\nNothing to clean up.");
-    await db.destroy();
     return;
   }
 
-  // 4. Show sample
   console.log("\nOrphaned files (first 10):");
   for (const f of orphans.slice(0, 10)) {
     const sizeKB = (f.size / 1024).toFixed(1);
     console.log(`  ${f.key} — ${f.name} (${sizeKB} KB)`);
   }
 
-  // 5. Delete if flagged
   if (deleteFlag) {
     console.log(`\nDeleting ${orphans.length} orphaned files...`);
     const keys = orphans.map((f) => f.key);
     const result = await uploadthing.deleteFiles(keys);
     console.log(`Deleted: ${result.deletedCount} files. Success: ${result.success}`);
   } else {
-    console.log("\nRun with --delete to remove these files.");
+    console.log('\nRun with --delete to remove these files.');
   }
-
-  await db.destroy();
 }
 
 main().catch((e) => {
