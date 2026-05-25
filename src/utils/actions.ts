@@ -8,19 +8,21 @@ import {
 } from "@/constants/credit-costs";
 import { GOOGLE_AUTH_CLIENT_ID, GOOGLE_AUTH_CLIENT_SECRET, CF_PAGES_URL } from "astro:env/server";
 
-function ensureAuth(locals?: any) {
-  const d1 = locals?.runtime?.env?.DB;
-  if (d1) {
-    initAuth(d1, {
+async function ensureAuth() {
+  try {
+    const { env } = await import("cloudflare:workers");
+    initAuth(env.DB, {
       GOOGLE_AUTH_CLIENT_ID,
       GOOGLE_AUTH_CLIENT_SECRET,
       CF_PAGES_URL,
     });
+  } catch {
+    // not running in Cloudflare (prerender)
   }
 }
 
-export async function checkIfSignedInAndGetUserId(headers: Headers, locals?: any) {
-  ensureAuth(locals);
+export async function checkIfSignedInAndGetUserId(headers: Headers, _locals?: any) {
+  await ensureAuth();
   const session = await auth.api.getSession({ headers });
 
   if (!session?.session) {
@@ -33,8 +35,8 @@ export async function checkIfSignedInAndGetUserId(headers: Headers, locals?: any
   return session.user.id;
 }
 
-export async function requireAdmin(headers: Headers, locals?: any) {
-  ensureAuth(locals);
+export async function requireAdmin(headers: Headers, _locals?: any) {
+  await ensureAuth();
   const session = await auth.api.getSession({ headers });
 
   if (!session?.session) {
@@ -77,6 +79,7 @@ export async function getCreditCosts() {
     regenerate: typeof value.regenerate === "number" ? value.regenerate : CREDIT_COST_REGENERATE,
   };
 }
+
 export async function deductCredits(
   userId: string,
   amount: number,

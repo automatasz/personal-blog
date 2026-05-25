@@ -45,7 +45,9 @@ export default defineConfig({
       cache: true,
       preload: true,
       accessibility: true,
-      updateHead: true,
+      updateHead: {
+        persistTags: ['link[rel="stylesheet"]'],
+      },
       updateBodyClass: false,
       globalInstance: true,
     }),

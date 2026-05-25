@@ -3,6 +3,7 @@ import { z } from "astro:schema";
 import { db } from "@utils/db";
 import { checkIfSignedInAndGetUserId } from "@utils/actions";
 import { CREDIT_COST_REGENERATE } from "@/constants/credit-costs";
+import { env } from "cloudflare:workers";
 
 export const updateDescription = defineAction({
   input: z.object({
@@ -47,7 +48,7 @@ export const regenerateDescription = defineAction({
   }),
   handler: async (input, context) => {
     const userId = await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
-    const queue = (context.locals as any).runtime.env.IMAGE_QUEUE;
+    const queue = env.IMAGE_QUEUE;
 
     const record = await db.selectFrom("description")
       .select(["file_id", "user_id"])
