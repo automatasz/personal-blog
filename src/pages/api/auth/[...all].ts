@@ -5,12 +5,13 @@ import type { APIRoute } from "astro";
 
 export const prerender = false;
 
+initAuth(env.DB, {
+  GOOGLE_AUTH_CLIENT_ID,
+  GOOGLE_AUTH_CLIENT_SECRET,
+  CF_PAGES_URL,
+});
+
 export const ALL: APIRoute = async (ctx) => {
-  initAuth(env.DB, {
-    GOOGLE_AUTH_CLIENT_ID,
-    GOOGLE_AUTH_CLIENT_SECRET,
-    CF_PAGES_URL,
-  });
   const req = new Request(ctx.request, {
     headers: { ...Object.fromEntries(ctx.request.headers), "x-forwarded-for": ctx.clientAddress },
   });
