@@ -1,6 +1,7 @@
 import { defineAction } from "astro:actions";
 import { checkIfSignedInAndGetUserId } from "@utils/actions";
 import { db } from "@utils/db";
+import { sql } from "kysely";
 
 export const getBatches = defineAction({
   accept: "json",
@@ -12,8 +13,8 @@ export const getBatches = defineAction({
       .select([
         "description.batch_id as id",
         "batch.title",
-        db.fn.min("description.created_at").as("created_at"),
-        db.fn.count("description.id").as("number_of_images"),
+        sql<Date>`min(description.created_at)`.as("created_at"),
+        sql<number>`count(description.id)`.as("number_of_images"),
       ])
       .where("description.user_id", "=", userId)
       .groupBy(["description.batch_id", "batch.title", "batch.created_at"])

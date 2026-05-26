@@ -20,7 +20,7 @@ export async function getStaticPaths() {
     return import.meta.env.PROD ? data.draft !== true : true;
   });
   return blogEntries.map((entry) => ({
-    params: { slug: entry.slug },
+    params: { slug: entry.id.replace(/\/index$/, "") },
     props: { entry },
   }));
 }
@@ -122,7 +122,7 @@ const jsonLd = {
           <License
             class="mb-6 rounded-xl license-container onload-animation"
             pubDate={entry.data.published}
-            slug={entry.slug}
+            slug={entry.id.replace(/\/index$/, "")}
             title={entry.data.title}
           />
         )

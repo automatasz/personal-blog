@@ -40,7 +40,7 @@ type Entry = {
           tags={entry.data.tags}
           title={entry.data.title}
           updated={entry.data.updated}
-          url={getPostUrlBySlug(entry.slug)}
+          url={getPostUrlBySlug(entry.id.replace(/\/index$/, ""))}
         />
       );
     })

@@ -78,7 +78,7 @@ function formatTag(tag: string[]) {
         <a 
           aria-label={post.data.title}
           class="group btn-plain !block h-10 w-full rounded-lg hover:text-[initial]"
-          href={getPostUrlBySlug(post.slug)}
+          href={getPostUrlBySlug(post.id.replace(/\/index$/, ""))}
         >
           <div class="flex flex-row justify-start items-center h-full">
             <!-- date -->
