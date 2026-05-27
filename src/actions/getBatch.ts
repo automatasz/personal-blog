@@ -9,17 +9,20 @@ export const getBatch = defineAction({
     batchId: z.string().uuid(),
   }),
   handler: async (input, context) => {
-    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
-    const descriptions = await db
-      .withSchema("keyworder")
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
+    const rows = await db
       .selectFrom("description")
       .selectAll()
       .where("batch_id", "=", input.batchId)
       .where("user_id", "=", userId)
       .execute();
 
+    const descriptions = rows.map(r => ({
+      ...r,
+      keywords: r.keywords ? JSON.parse(r.keywords) as string[] : null,
+    }));
+
     const batch = await db
-      .withSchema("keyworder")
       .selectFrom("batch")
       .select("title")
       .where("id", "=", input.batchId)

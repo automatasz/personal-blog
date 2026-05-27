@@ -1,35 +1,21 @@
-import { Pool } from "pg";
-import { DATABASE_URL } from "astro:env/server";
+import { D1Dialect } from "kysely-d1";
 import {
   Kysely,
-  PostgresDialect,
   type ColumnType,
-  type Generated,
   type Insertable,
   type Selectable,
   type Updateable,
 } from "kysely";
 
 export interface Database {
-  description: Tables["keyworder.description"];
-  user: Tables["keyworder.user"];
-  session: Tables["keyworder.session"];
-  account: Tables["keyworder.account"];
-  verification: Tables["keyworder.verification"];
-  batch: Tables["keyworder.batch"];
-  credit_audit: Tables["keyworder.credit_audit"];
-  app_settings: Tables["keyworder.app_settings"];
-}
-
-interface Tables {
-  "keyworder.description": DescriptionTable;
-  "keyworder.user": AuthUserTable;
-  "keyworder.session": SessionTable;
-  "keyworder.account": AccountTable;
-  "keyworder.verification": VerificationTable;
-  "keyworder.batch": BatchTable;
-  "keyworder.credit_audit": CreditAuditTable;
-  "keyworder.app_settings": AppSettingsTable;
+  description: DescriptionTable;
+  user: AuthUserTable;
+  session: SessionTable;
+  account: AccountTable;
+  verification: VerificationTable;
+  batch: BatchTable;
+  credit_audit: CreditAuditTable;
+  app_settings: AppSettingsTable;
 }
 
 export interface BatchTable {
@@ -43,10 +29,10 @@ export type NewBatch = Insertable<BatchTable>;
 export type BatchUpdate = Updateable<BatchTable>;
 
 export interface DescriptionTable {
-  id: Generated<string>;
+  id: string;
   file_id: string;
   file_name: string | null;
-  keywords: string[] | null;
+  keywords: string | null;
   description: string | null;
   title: string | null;
   user_id: string;
@@ -119,11 +105,11 @@ export interface VerificationTable {
 export type Verification = Selectable<VerificationTable>;
 
 export interface CreditAuditTable {
-  id: Generated<string>;
+  id: string;
   user_id: string;
   amount: number;
   action: string;
-  metadata: Record<string, unknown> | null;
+  metadata: string | null;
   created_at: ColumnType<Date, never, never>;
 }
 
@@ -132,7 +118,7 @@ export type NewCreditAudit = Insertable<CreditAuditTable>;
 
 export interface AppSettingsTable {
   key: string;
-  value: Record<string, unknown>;
+  value: string;
   updated_at: ColumnType<Date, string | undefined, Date>;
   updated_by: string | null;
 }
@@ -141,18 +127,21 @@ export type AppSettings = Selectable<AppSettingsTable>;
 export type NewAppSettings = Insertable<AppSettingsTable>;
 export type AppSettingsUpdate = Updateable<AppSettingsTable>;
 
-const pool = new Pool({
-  connectionString: DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
+let _db: Kysely<Database> | undefined;
+
+export function initDb(d1: unknown) {
+  _db = new Kysely<Database>({
+    dialect: new D1Dialect({ database: d1 as any }),
+    log: import.meta.env.DEV ? ["query", "error"] : ["error"],
+  });
+}
+
+const _dbHandler: ProxyHandler<Kysely<Database>> = {
+  get(_, prop) {
+    if (!_db) throw new Error("DB not initialized. Call initDb() first.");
+    const value = (_db as any)[prop];
+    return typeof value === "function" ? value.bind(_db) : value;
   },
-});
+};
 
-export const dialect = new PostgresDialect({
-  pool,
-});
-
-export const db = new Kysely<Database>({
-  dialect,
-  log: import.meta.env.DEV ? ["query", "error"] : ["error"],
-});
+export const db = new Proxy({} as Kysely<Database>, _dbHandler);

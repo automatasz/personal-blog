@@ -8,17 +8,17 @@ Full reference dump of the `personal-blog` codebase at `/home/user/projects/pers
 
 | Layer | Choice | Notes |
 |-------|--------|-------|
-| Framework | Astro 5 (SSR) + Svelte 5 | 37 .astro files, 12 .svelte files |
-| Database | PostgreSQL via Kysely 0.28 | All tables in `keyworder` schema |
-| Auth | better-auth 1.2 | Google OAuth + email/password, role-based (admin/user) |
-| Background jobs | Inngest 4.4 | Single function: `keyworder/image.describe` |
+| Framework | Astro 6 (SSR) + Svelte 5 | 37 .astro files, 12 .svelte files |
+| Database | D1 SQLite via Kysely 0.28 + kysely-d1 | No schema (SQLite flat) |
+| Auth | better-auth 1.2 | Google OAuth + email/password, role-based (admin/user), SQLite adapter |
+| Background jobs | Cloudflare Queues | Single queue: `image-describe`, consumed by standalone Worker |
 | AI | OpenAI (GPT-4.1 Nano) | Image description + keyword generation |
 | File storage | UploadThing 7.7 | S3-compatible, max 128MB, 100 files |
 | CSS | Tailwind 3.4 + Stylus variables | Dark mode via `class` strategy |
-| Page transitions | Swup (@swup/astro 1.5) | Cache enabled, containers: `main`, `#toc` |
+| Page transitions | Swup (@swup/astro 1.8) | Cache enabled, containers: `main`, `#toc` |
 | Schema validation | Zod | Input validation for actions + Inngest |
 | Icons | Iconify (Svelte + Astro) | FA6 brands/regular/solid, Material Symbols |
-| Hosting | Vercel | SSR via `@astrojs/vercel` adapter |
+| Hosting | Cloudflare Workers | SSR via `@astrojs/cloudflare` v13 adapter |
 | Fonts | DM Sans (headings), Roboto (body), JetBrains Mono (code) | |
 
 ---
@@ -37,12 +37,11 @@ src/
   constants/         # App constants (6 files)
   content/           # Astro content collections (posts + spec/about)
   i18n/              # Internationalization (7 languages)
-  inngest/           # Background job definitions (4 files)
-  layouts/           # Layouts (2 .astro)
-  pages/             # Routes (12 entries)
-    api/             #   API routes (auth, inngest, uploadthing)
-    archive/         #   Archive pages (tag, category)
-    posts/           #   Blog post reader
+   layouts/           # Layouts (2 .astro)
+   pages/             # Routes (12 entries)
+     api/             #   API routes (auth, uploadthing)
+     archive/         #   Archive pages (tag, category)
+     posts/           #   Blog post reader
   plugins/           # Markdown/rehype plugins (5 files)
   styles/            # Stylesheets (8 files)
   types/             # TypeScript types (2 files)
@@ -57,29 +56,28 @@ src/
 |------|-------|
 | `.astro` | 37 |
 | `.svelte` | 12 |
-| `.ts` | 52 |
-| `.mjs` / `.js` / `.cjs` | 12 |
+| `.ts` | 49 |
+| `.mjs` / `.js` / `.cjs` | 11 |
 
 ---
 
 ## Dependencies (production)
 
 ### Framework
-- `astro` 5.13.10
-- `svelte` ^5.5.3
-- `@astrojs/svelte` 7.1.1
-- `@astrojs/vercel` ^8.2.8
+- `astro` ^6.3.7
+- `svelte` ^5.55.9
+- `@astrojs/svelte` ^8.1.1
+- `@astrojs/cloudflare` ^13.5.4
 
-### Database
+### Database & Auth
 - `kysely` ^0.28.2
-- `pg` ^8.16.0
-- `@types/pg` ^8.15.4
+- `kysely-d1` — D1 SQLite dialect for Kysely
 
 ### Auth
 - `better-auth` ^1.2.9
 
 ### Background Jobs
-- `inngest` ^4.4.0
+- Cloudflare Queues (no extra dependency — uses `@cloudflare/workers-types`)
 
 ### AI
 - `openai` ^5.3.0
@@ -116,7 +114,7 @@ src/
 - `sharp` ^0.33.5
 
 ### UI
-- `@swup/astro` ^1.5.0
+- `@swup/astro` ^1.8.0
 - `@iconify/svelte` ^4.0.2
 - `@iconify-json/fa6-brands` ^1.2.3
 - `@iconify-json/fa6-regular` ^1.2.2
@@ -126,8 +124,8 @@ src/
 - `pagefind` ^1.3.0
 - `overlayscrollbars` ^2.10.1
 - `katex` ^0.16.19
-- `astro-icon` ^1.1.4
-- `astro-compress` ^2.3.5
+- `astro-icon` ^1.1.5
+- `astro-compress` ^2.4.1
 
 ### Fonts
 - `@fontsource-variable/jetbrains-mono` ^5.1.1
@@ -142,7 +140,7 @@ src/
 
 ## Database Schema
 
-All tables in `keyworder` schema.
+No schema prefix (D1/SQLite flat namespace). JSON columns stored as TEXT (manually `JSON.parse`/`JSON.stringify` at action boundary).
 
 ### `user` (better-auth)
 | Column | Type | Notes |
@@ -150,12 +148,12 @@ All tables in `keyworder` schema.
 | id | text PK | |
 | name | text | |
 | email | text | unique |
-| emailVerified | boolean | |
+| emailVerified | integer | SQLite boolean |
 | image | text? | |
 | role | text | "admin" \| "user" |
-| credits | int | default 0 |
-| createdAt | timestamp | |
-| updatedAt | timestamp | |
+| credits | integer | default 0 |
+| createdAt | text | ISO 8601 |
+| updatedAt | text | ISO 8601 |
 
 ### `session` (better-auth)
 | Column | Type |
@@ -163,11 +161,11 @@ All tables in `keyworder` schema.
 | id | text PK |
 | userId | text FK -> user |
 | token | text unique |
-| expiresAt | timestamp |
+| expiresAt | text |
 | ipAddress | text? |
 | userAgent | text? |
-| createdAt | timestamp |
-| updatedAt | timestamp |
+| createdAt | text |
+| updatedAt | text |
 
 ### `account` (better-auth)
 | Column | Type |
@@ -179,12 +177,12 @@ All tables in `keyworder` schema.
 | accessToken | text? |
 | refreshToken | text? |
 | idToken | text? |
-| accessTokenExpiresAt | timestamp? |
-| refreshTokenExpiresAt | timestamp? |
+| accessTokenExpiresAt | text? |
+| refreshTokenExpiresAt | text? |
 | scope | text? |
 | password | text? |
-| createdAt | timestamp |
-| updatedAt | timestamp |
+| createdAt | text |
+| updatedAt | text |
 
 ### `verification` (better-auth)
 | Column | Type |
@@ -192,55 +190,57 @@ All tables in `keyworder` schema.
 | id | text PK |
 | identifier | text |
 | value | text |
-| expiresAt | timestamp |
-| createdAt | timestamp |
-| updatedAt | timestamp |
+| expiresAt | text |
+| createdAt | text |
+| updatedAt | text |
 
 ### `description` (app)
 | Column | Type | Notes |
 |--------|------|-------|
-| id | uuid PK | auto-generated |
+| id | text PK | UUID (crypto.randomUUID) |
 | file_id | text | UploadThing file ID |
 | file_name | text? | |
-| keywords | text[]? | up to 100 keywords |
+| keywords | text? | JSON array of strings |
 | description | text? | AI-generated |
 | title | text? | AI-generated |
 | user_id | text FK -> user | |
 | batch_id | text | groups related uploads |
-| tokens_used | int? | OpenAI token count |
+| tokens_used | integer? | OpenAI token count |
 | result | text? | "success" \| "fail" |
-| width | int? | image width |
-| height | int? | image height |
-| created_at | timestamp | auto |
+| width | integer? | image width |
+| height | integer? | image height |
+| created_at | text | ISO 8601 |
 
 ### `batch` (app)
 | Column | Type |
 |--------|------|
 | id | text PK |
 | title | text? |
-| created_at | timestamp |
+| created_at | text |
 
 ### `credit_audit` (app)
 | Column | Type |
 |--------|------|
-| id | uuid PK auto |
+| id | text PK | UUID (crypto.randomUUID) |
 | user_id | text FK -> user |
-| amount | int |
+| amount | integer |
 | action | text |
-| metadata | jsonb? |
-| created_at | timestamp |
+| metadata | text? | JSON object |
+| created_at | text |
 
 ---
 
 ## Auth Flow
 
 ### Server (`src/utils/auth.ts`)
-- `betterAuth` configured with Kysely Postgres dialect
-- Models mapped to `keyworder.{user,session,account,verification}`
+- `betterAuth` configured with Kysely SQLite dialect (via `kysely-d1`)
+- Flat model names (`user`, `session`, `account`, `verification`)
+- Lazy `initAuth(d1, config)` pattern — avoids `astro:env` at module load time
+- Proxy-based `auth` singleton: first access triggers init
 - User model has `role` additional field (string, default "user", not inputtable)
 - Email/password + Google OAuth
 - Session cookie cache: 300s
-- Vercel branch URL in trusted origins
+- Cloudflare Workers URL in trusted origins
 
 ### API Route (`src/pages/api/auth/[...all].ts`)
 - Catch-all handler, sets `x-forwarded-for` header
@@ -252,40 +252,34 @@ All tables in `keyworder` schema.
 - Both use `inferAdditionalFields<typeof auth>()` plugin
 
 ### Auth Utility (`src/utils/actions.ts`)
-- `checkIfSignedInAndGetUserId(headers)` -- calls `auth.api.getSession()`, throws `ActionError("UNAUTHORIZED")` if not signed in
-- `deductCredits(userId, amount, action, metadata?)` -- atomic transaction with `FOR UPDATE` row lock + `credit_audit` trail
+- `checkIfSignedInAndGetUserId(headers, locals)` -- calls `auth.api.getSession()`, throws `ActionError("UNAUTHORIZED")` if not signed in
+- `requireAdmin(headers, locals)` — same but also checks `role === "admin"`
+- `ensureAuth(locals)` — lazy init auth from `locals.runtime.env` if not yet initialized
+- `deductCredits(userId, amount, action, metadata?)` — writes to `credit_audit`, updates user credits (no `FOR UPDATE` — D1 serialized writes make it safe)
 
 ---
 
-## Inngest Flow
+## Queue Worker Flow
 
-### Files
-| File | Purpose |
-|------|---------|
-| `src/inngest/client.ts` | Inngest client (`id: "keyworder"`) |
-| `src/inngest/index.ts` | Re-exports `inngest` + `functions` |
-| `src/inngest/types.ts` | Zod schemas: `descriptionSchema`, `batchSchema` |
-| `src/inngest/describe-image.ts` | Single function |
+### File
+- `src/queue-worker.ts` — standalone Cloudflare Worker (not part of Astro build)
 
-### Event
-- Name: `keyworder/image.describe`
-- Data: `{ fileId: string, descriptionId: string }`
+### Queue
+- Name: `image-describe`
+- Message: `{ fileId: string, descriptionId: string }`
+- Dead-letter queue configured in `wrangler-consumer.jsonc`
 
 ### Flow
 1. User uploads images via UploadThing (client-side)
-2. `postFileIds` action creates DB records + sends Inngest event for each file
+2. `postFileIds` action creates DB records + sends message to `IMAGE_QUEUE` for each file
 3. Deducts credits (7 per image)
-4. Inngest function:
+4. Queue consumer Worker (deployed separately):
    a. Calls OpenAI GPT-4.1 Nano to generate title, description, 100 keywords from image URL
    b. Saves result to `description` table
    c. Checks if all descriptions in batch are complete
    d. If complete, calls OpenAI to generate batch title from individual image titles
    e. Upserts batch title into `batch` table
 5. Client polls `checkEventComplete` action to detect completion
-
-### API Route (`src/pages/api/inngest.ts`)
-- Exports GET, POST, PUT handlers via `inngest/astro`
-- `prerender = false`
 
 ---
 
@@ -325,7 +319,7 @@ All tables in `keyworder` schema.
 | `/archive/` | `archive/index.astro` | Static | Archive listing |
 | `/archive/tag/[tag]` | `archive/tag/[tag].astro` | Static | Posts by tag |
 | `/archive/category/[category]` | `archive/category/[category].astro` | Static | Posts by category |
-| `/gallery` | `gallery.astro` | Static | Photo gallery |
+| `/gallery` | `gallery.astro` | SSR (Svelte onMount) | Photo gallery |
 | `/keyworder` | `keyworder.astro` | SSR | AI image keyworder |
 | `/batch` | `batch.astro` | SSR | Batch results |
 | `/my-account` | `my-account.astro` | `false` | User stats/batches |
@@ -339,7 +333,6 @@ All tables in `keyworder` schema.
 | Route | File | Method |
 |-------|------|--------|
 | `/api/auth/[...all]` | `api/auth/[...all].ts` | ALL |
-| `/api/inngest` | `api/inngest.ts` | GET, POST, PUT |
 | `/api/uploadthing` | `api/uploadthing.ts` | GET, POST |
 
 ---
@@ -402,7 +395,7 @@ Defined in `src/actions/`, exported via `src/actions/index.ts` as `server`.
 ## Configuration
 
 ### Astro Config (`astro.config.mjs`)
-- SSR via Vercel adapter
+- SSR via Cloudflare Workers adapter (v13)
 - Tailwind with nesting
 - Swup: cache=true, containers=["main", "#toc"], smooth scrolling, preloading
 - Icon sets: fa6-brands, fa6-regular, fa6-solid
@@ -437,13 +430,10 @@ Defined in `src/actions/`, exported via `src/actions/index.ts` as `server`.
 | `POSTHOG_API_HOST` | client | public |
 | `UPLOADTHING_APP_ID` | client | public |
 | `OPENAI_API_KEY` | server | secret |
-| `DATABASE_URL` | server | secret |
 | `GOOGLE_AUTH_CLIENT_ID` | server | secret |
 | `GOOGLE_AUTH_CLIENT_SECRET` | server | secret |
-| `INNGEST_API_URL` | server | secret |
-| `INNGEST_SIGNING_KEY` | server | secret |
 | `UPLOADTHING_TOKEN` | server | secret |
-| `VERCEL_BRANCH_URL` | server | secret, optional |
+| `CF_PAGES_URL` | server | secret, optional |
 
 ---
 
@@ -487,14 +477,14 @@ Defined in `src/actions/`, exported via `src/actions/index.ts` as `server`.
 ## Key Patterns
 
 ### Credit System
-- Atomic deduction via `db.transaction()` + `FOR UPDATE` row lock
+- Atomic deduction via `db.transaction()` (D1 serialized writes — no `FOR UPDATE` needed)
 - Audit trail in `credit_audit` table
 - Used by: upload (1), describe (7), regenerate (5)
 
 ### Background Job Pattern
 1. Client uploads files via UploadThing
-2. `postFileIds` action creates DB records + sends Inngest events
-3. Inngest processes image via OpenAI, saves results
+2. `postFileIds` action creates DB records + sends queue messages
+3. Queue consumer Worker processes image via OpenAI, saves results
 4. When batch complete, generates batch title
 5. Client polls `checkEventComplete` action
 
@@ -514,12 +504,10 @@ Defined in `src/actions/`, exported via `src/actions/index.ts` as `server`.
 
 ## Migrations
 
-### `better-auth_migrations/`
-- `2025-06-14T16-15-38.649Z.sql` -- Creates schema + user/session/account/verification + original description table
+### `d1-migrations/`
+- `0000_init.sql` -- Creates all tables: user, session, account, verification, description, batch, credit_audit
 
-### `keyworder_migrations/`
-- `2026-05-14_add_credits.sql` -- Adds `credits` column to user, seeds admins with 200
-- `2026-05-14_add_credit_audit.sql` -- Creates credit_audit table
+Apply with: `pnpm wrangler d1 migrations apply fuwari-db`
 
 ---
 
@@ -527,14 +515,44 @@ Defined in `src/actions/`, exported via `src/actions/index.ts` as `server`.
 
 | Script | Command |
 |--------|---------|
-| `dev` | `INNGEST_DEV=1 astro dev --host` |
-| `dev:all` | astro dev + inngest-cli dev |
-| `build` | `astro build && pagefind --site .vercel/output/static` |
+| `dev` | `astro dev --host` |
+| `build` | `astro build && pagefind --site dist` |
+| `deploy` | `wrangler deploy` |
+| `deploy:consumer` | `wrangler deploy --config wrangler-consumer.jsonc` |
 | `type-check` | `tsc --noEmit --isolatedDeclarations` |
 | `new-post` | `node scripts/new-post.js` |
-| `cleanup-orphans` | `npx tsx scripts/cleanup-orphaned-uploads.ts` |
+| `cleanup-orphans` | `UPLOADTHING_TOKEN=... npx tsx scripts/cleanup-orphaned-uploads.ts` |
 
 ---
+
+## Database Access Pattern
+
+### Lazy Initialization
+Both `db` and `auth` are lazily initialized via Proxy pattern:
+- `src/utils/db.ts`: `initDb(d1)` stores D1 binding, Proxy forwards to underlying Kysely instance
+- `src/utils/auth.ts`: `initAuth(d1, config)` stores binding + config, Proxy forwards to `better-auth` instance
+- Initialized in middleware (`src/middleware.ts`) and on-demand in action handlers (`src/utils/actions.ts`)
+
+### Key Differences from PostgreSQL
+| PG Feature | D1 Equivalent |
+|------------|---------------|
+| `keyworder.schema` prefix | No schema — flat table names |
+| `gen_random_uuid()` | `crypto.randomUUID()` in JS |
+| `now()` / `NOW()` | `CURRENT_TIMESTAMP` (SQLite) |
+| `FILTER (WHERE ...)` | `CASE WHEN ... END` |
+| `::jsonb` cast | TEXT column + `JSON.parse()` |
+| `FOR UPDATE` row lock | Not needed — D1 serializes writes |
+| `text[]` array type | TEXT column with JSON array string |
+| `RETURNING` | Supported natively in SQLite 3.35+ |
+| `timestamptz` | TEXT column with ISO 8601 string |
+
+## Separate Queue Consumer Worker
+
+The queue consumer (`src/queue-worker.ts`) is deployed as a **separate Worker** from the Astro SSR Worker. This avoids `@astrojs/cloudflare` incompatibility with `queues.consumers` in `wrangler.jsonc`.
+
+- Astro Worker (`wrangler.jsonc`): only has `queues.producers` — sends messages to `image-describe` queue
+- Consumer Worker (`wrangler-consumer.jsonc`): has `queues.consumers` — processes messages with direct D1 access
+- Both Workers share the same `DB` D1 binding and secrets
 
 ## Swup Cache Behavior
 

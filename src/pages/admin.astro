@@ -11,17 +11,16 @@ export const prerender = false;
 let settingsData: Record<string, number> | null = null;
 
 try {
-  await requireAdmin(Astro.request.headers);
+  await requireAdmin(Astro.request.headers, Astro.locals);
 
   const row = await db
-    .withSchema("keyworder")
     .selectFrom("app_settings")
     .select("value")
     .where("key", "=", "credit_costs")
     .executeTakeFirst();
 
   if (row) {
-    settingsData = row.value as Record<string, number>;
+    settingsData = JSON.parse(row.value) as Record<string, number>;
   }
 }
 catch {

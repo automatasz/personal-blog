@@ -1,11 +1,11 @@
 import { db } from "./db";
+import { sql } from "kysely";
 
 export const getBatchSuccessCount = (batchId: string) => {
   return db
-    .withSchema("keyworder")
     .selectFrom("description")
     .select(({ fn }) => [
-      fn.count<number>("result").filterWhere("result", "is not", null).as("successCount"),
+      fn.count<number>(sql<string>`CASE WHEN "result" IS NOT NULL THEN 1 END`).as("successCount"),
       fn.count<number>("id").as("totalCount"),
     ])
     .where("batch_id", "=", batchId);
@@ -13,7 +13,6 @@ export const getBatchSuccessCount = (batchId: string) => {
 
 export const getBatchTitles = (batchId: string) => {
   return db
-    .withSchema("keyworder")
     .selectFrom("description")
     .select("title")
     .where("batch_id", "=", batchId);

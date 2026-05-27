@@ -1,5 +1,5 @@
 ---
-import path from "path";
+import { render } from "astro:content";
 import PostMetadata from "@components/PostMeta.astro";
 import ImageWrapper from "@components/misc/ImageWrapper.astro";
 import { Icon } from "astro-icon/components";
@@ -28,7 +28,7 @@ const hasCover = image !== undefined && image !== null && image !== "";
 
 const coverWidth = "28%";
 
-const { remarkPluginFrontmatter } = await entry.render();
+const { remarkPluginFrontmatter } = await render(entry);
 ---
 
 <div

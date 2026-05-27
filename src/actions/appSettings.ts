@@ -8,10 +8,9 @@ const COSTS_KEY = "credit_costs";
 
 export const getAppSettings = defineAction({
   handler: async (input, context) => {
-    await checkIfSignedInAndGetUserId(context.request.headers);
+    await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
 
     const row = await db
-      .withSchema("keyworder")
       .selectFrom("app_settings")
       .select(["key", "value"])
       .where("key", "=", COSTS_KEY)
@@ -28,7 +27,7 @@ export const getAppSettings = defineAction({
       };
     }
 
-    const v = row.value as Record<string, number>;
+    const v = JSON.parse(row.value) as Record<string, number>;
 
     return {
       creditCosts: {
@@ -49,7 +48,7 @@ export const updateAppSettings = defineAction({
     }),
   }),
   handler: async (input, context) => {
-    const userId = await requireAdmin(context.request.headers);
+    const userId = await requireAdmin(context.request.headers, context.locals);
 
     const newValue = {
       upload: input.creditCosts.upload,
@@ -58,12 +57,12 @@ export const updateAppSettings = defineAction({
     };
 
     await sql`
-      INSERT INTO keyworder."app_settings" ("key", "value", "updated_by", "updated_at")
-      VALUES (${COSTS_KEY}, ${JSON.stringify(newValue)}::jsonb, ${userId}, now())
+      INSERT INTO "app_settings" ("key", "value", "updated_by", "updated_at")
+      VALUES (${COSTS_KEY}, ${JSON.stringify(newValue)}, ${userId}, CURRENT_TIMESTAMP)
       ON CONFLICT ("key") DO UPDATE SET
-        "value" = ${JSON.stringify(newValue)}::jsonb,
+        "value" = ${JSON.stringify(newValue)},
         "updated_by" = ${userId},
-        "updated_at" = now()
+        "updated_at" = CURRENT_TIMESTAMP
     `.execute(db);
 
     return { success: true };

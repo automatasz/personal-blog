@@ -5,9 +5,8 @@ import { db } from "@utils/db";
 export const getBatches = defineAction({
   accept: "json",
   handler: async (_input, context) => {
-    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
     return db
-      .withSchema("keyworder")
       .selectFrom("description")
       .leftJoin("batch", "batch.id", "description.batch_id")
       .select([

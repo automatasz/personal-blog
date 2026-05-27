@@ -1,0 +1,24 @@
+{
+  "name": "fuwari-consumer",
+  "main": "src/queue-worker.ts",
+  "compatibility_date": "2025-05-24",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "fuwari-db",
+    "database_id": "70e017dd-253f-4eec-a858-c9a8eac9127f"
+  }],
+  "queues": {
+    "consumers": [{
+      "queue": "image-describe",
+      "max_batch_size": 1,
+      "max_retries": 3,
+      "max_batch_timeout": 60
+    }]
+  },
+  "vars": {
+    "UPLOADTHING_APP_ID": "oo142op4xa"
+  }
+}

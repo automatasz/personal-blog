@@ -1,6 +1,5 @@
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
-import { inngest } from "@/inngest";
 import { db } from "@utils/db";
 import { checkIfSignedInAndGetUserId } from "@utils/actions";
 import { CREDIT_COST_REGENERATE } from "@/constants/credit-costs";
@@ -13,19 +12,19 @@ export const updateDescription = defineAction({
     keywords: z.array(z.string()).optional(),
   }),
   handler: async (input, context) => {
-    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
 
     const updateData: {
       title?: string | null;
       description?: string | null;
-      keywords?: string[] | null;
+      keywords?: string | null;
     } = {};
 
     if (input.title !== undefined) updateData.title = input.title;
     if (input.description !== undefined) updateData.description = input.description;
-    if (input.keywords !== undefined) updateData.keywords = input.keywords;
+    if (input.keywords !== undefined) updateData.keywords = JSON.stringify(input.keywords);
 
-    const result = await db.withSchema("keyworder").updateTable("description")
+    const result = await db.updateTable("description")
       .set(updateData)
       .where("id", "=", input.descriptionId)
       .where("user_id", "=", userId)
@@ -47,9 +46,10 @@ export const regenerateDescription = defineAction({
     descriptionId: z.string().uuid(),
   }),
   handler: async (input, context) => {
-    const userId = await checkIfSignedInAndGetUserId(context.request.headers);
+    const userId = await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
+    const queue = (context.locals as any).runtime.env.IMAGE_QUEUE;
 
-    const record = await db.withSchema("keyworder").selectFrom("description")
+    const record = await db.selectFrom("description")
       .select(["file_id", "user_id"])
       .where("id", "=", input.descriptionId)
       .where("user_id", "=", userId)
@@ -59,15 +59,12 @@ export const regenerateDescription = defineAction({
       return { error: "Description not found" };
     }
 
-    await inngest.send({
-      name: "keyworder/image.describe",
-      data: {
-        fileId: record.file_id,
-        descriptionId: input.descriptionId,
-        userId,
-        cost: CREDIT_COST_REGENERATE,
-        mode: "regenerate",
-      },
+    await queue.send({
+      fileId: record.file_id,
+      descriptionId: input.descriptionId,
+      userId,
+      cost: CREDIT_COST_REGENERATE,
+      mode: "regenerate",
     });
 
     return { dispatched: true };
