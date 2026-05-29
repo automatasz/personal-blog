@@ -30,6 +30,26 @@ export default defineConfig({
     server: {
       allowedHosts: ["lievono"],
     },
+    plugins: [
+      {
+        name: "optimize-ssr-deps",
+        configEnvironment(environment) {
+          if (environment.name !== "client") {
+            return {
+              optimizeDeps: {
+                include: [
+                  "astro-icon",
+                  "astro-icon > @iconify/utils",
+                ],
+                exclude: [
+                  "@astrojs/cloudflare",
+                ],
+              },
+            };
+          }
+        },
+      },
+    ],
   },
   integrations: [
     tailwind({
@@ -140,6 +160,5 @@ export default defineConfig({
   },
   adapter: cloudflare({
     imageService: "compile",
-    prerenderEnvironment: "node",
   }),
 });

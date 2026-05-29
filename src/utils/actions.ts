@@ -1,6 +1,6 @@
 import { ActionError } from "astro:actions";
 import { auth, initAuth } from "./auth";
-import { db } from "./db";
+import { db, initDb } from "./db";
 import {
   CREDIT_COST_UPLOAD,
   CREDIT_COST_DESCRIBE,
@@ -11,6 +11,7 @@ import { GOOGLE_AUTH_CLIENT_ID, GOOGLE_AUTH_CLIENT_SECRET, CF_PAGES_URL } from "
 async function ensureAuth() {
   try {
     const { env } = await import("cloudflare:workers");
+    initDb(env.DB);
     initAuth(env.DB, {
       GOOGLE_AUTH_CLIENT_ID,
       GOOGLE_AUTH_CLIENT_SECRET,
@@ -86,37 +87,35 @@ export async function deductCredits(
   action: string,
   metadata?: Record<string, unknown>,
 ) {
-  await db.transaction().execute(async (trx) => {
-    const user = await trx
-      .selectFrom("user")
-      .select("credits")
-      .where("id", "=", userId)
-      .executeTakeFirst();
+  const user = await db
+    .selectFrom("user")
+    .select("credits")
+    .where("id", "=", userId)
+    .executeTakeFirst();
 
-    if (!user || user.credits < amount) {
-      throw new ActionError({
-        code: "FORBIDDEN",
-        message: "Insufficient credits. You need more credits to use this feature.",
-      });
-    }
+  if (!user || user.credits < amount) {
+    throw new ActionError({
+      code: "FORBIDDEN",
+      message: "Insufficient credits. You need more credits to use this feature.",
+    });
+  }
 
-    await trx
-      .updateTable("user")
-      .set(eb => ({
-        credits: eb("credits", "-", amount),
-      }))
-      .where("id", "=", userId)
-      .executeTakeFirst();
+  await db
+    .updateTable("user")
+    .set(eb => ({
+      credits: eb("credits", "-", amount),
+    }))
+    .where("id", "=", userId)
+    .executeTakeFirst();
 
-    await trx
-      .insertInto("credit_audit")
-      .values({
-        id: crypto.randomUUID(),
-        user_id: userId,
-        amount: -amount,
-        action,
-        metadata: metadata ? JSON.stringify(metadata) : null,
-      })
-      .execute();
-  });
+  await db
+    .insertInto("credit_audit")
+    .values({
+      id: crypto.randomUUID(),
+      user_id: userId,
+      amount: -amount,
+      action,
+      metadata: metadata ? JSON.stringify(metadata) : null,
+    })
+    .execute();
 }

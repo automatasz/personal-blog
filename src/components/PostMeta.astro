@@ -61,15 +61,27 @@ const className = Astro.props.class;
     <div class="flex flex-row flex-nowrap items-center">
       {(tags && tags.length > 0) && tags.map((tag, i) => (
           <div class:list={[{"hidden": i == 0}, "mx-1.5 text-[var(--meta-divider)] text-sm"]}>/</div>
-          <a 
-            aria-label={`View all posts with the ${tag} tag`}              
-            class="link-lg transition text-50 text-sm font-medium hover:text-[var(--primary)] dark:hover:text-[var(--primary)] whitespace-nowrap"              
-            href={url(`/archive/tag/${tag}/`)}
+          <button 
+            type="button"
+            aria-label={`Copy tag: ${tag}`}              
+            class="copy-tag link-lg transition text-50 text-sm font-medium hover:text-[var(--primary)] dark:hover:text-[var(--primary)] whitespace-nowrap cursor-pointer"              
+            data-tag={tag}
           >
             {tag}
-          </a>
+          </button>
       ))}
       {!(tags && tags.length > 0) && <div class="transition text-50 text-sm font-medium">{i18n(I18nKey.noTags)}</div>}
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".copy-tag");
+    if (!btn) return;
+    navigator.clipboard.writeText(btn.dataset.tag ?? btn.textContent ?? "");
+    const orig = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = orig; }, 800);
+  });
+</script>

@@ -1,4 +1,4 @@
-const BASE_URL = process.env.BASE_URL || "https://fuwari.mataspss.workers.dev";
+const BASE_URL = process.env.BASE_URL || "http://localhost:4321";
 
 const [email, password, userName] = process.argv.slice(2);
 

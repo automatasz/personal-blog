@@ -4,7 +4,6 @@ import { checkIfSignedInAndGetUserId } from "@utils/actions";
 import { CREDIT_COST_DESCRIBE } from "@/constants/credit-costs";
 import { db } from "@utils/db";
 import { uploadthing } from "@utils/storage";
-import { env } from "cloudflare:workers";
 
 export const postFileIds = defineAction({
   input: z.object({
@@ -17,6 +16,7 @@ export const postFileIds = defineAction({
   }),
   handler: async (input, context) => {
     const userId = await checkIfSignedInAndGetUserId(context.request.headers, context.locals);
+    const { env } = await import("cloudflare:workers");
     const queue = env.IMAGE_QUEUE;
     const batchId = crypto.randomUUID();
 

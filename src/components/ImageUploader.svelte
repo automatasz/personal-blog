@@ -258,6 +258,7 @@
                   height: image.height,
                 }}
                 appId={UPLOADTHING_APP_ID}
+                src={image.url}
               />
               <div
                 class="absolute inset-0 bg-transparent group-hover:bg-black/70 transition-all duration-300 z-10 flex items-center justify-center"

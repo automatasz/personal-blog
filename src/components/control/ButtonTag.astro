@@ -1,13 +1,17 @@
 ---
 interface Props {
   dot?: boolean;
-  href?: string;
-  label?: string;
+  tag?: string;
 }
-const { dot, href, label }: Props = Astro.props;
+const { dot, tag }: Props = Astro.props;
 ---
 
-<a aria-label={label} class="btn-regular h-8 text-sm px-3 rounded-lg" href={href}>
+<button
+  type="button"
+  aria-label={tag ? `Copy tag: ${tag}` : "Copy tag"}
+  class="copy-tag btn-regular h-8 text-sm px-3 rounded-lg cursor-pointer"
+  data-tag={tag}
+>
   {dot && <div class="h-1 w-1 bg-[var(--btn-content)] dark:bg-[var(--card-bg)] transition rounded-md mr-2" />}
   <slot />
-</a>
+</button>

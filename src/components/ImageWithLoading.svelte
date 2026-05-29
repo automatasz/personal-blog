@@ -4,12 +4,16 @@
   let {
     description,
     appId,
+    src: externalSrc,
   }: {
     appId: string;
     description: Pick<Description, "file_id" | "title" | "width" | "height">;
+    src?: string;
   } = $props();
   let loading = $state(true);
   let error = $state(false);
+
+  const src = $derived(externalSrc ?? `https://${appId}.ufs.sh/f/${description.file_id}`);
 
   function completeLoading() {
     loading = false;
@@ -30,7 +34,7 @@
 {:else}
   <img
     alt={description.title}
-    src={`https://${appId}.ufs.sh/f/${description.file_id}`}
+    {src}
     class="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-110"
     loading="lazy"
     onload={completeLoading}
